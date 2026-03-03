@@ -120,7 +120,43 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom Sidebar Scrollbar */
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/10 rounded-full transition;
+  }
+
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/20;
+  }
+
+  /* Selection styling */
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  /* Page transition helper */
+  .page-fade-in {
+    @apply animate-in fade-in duration-500 fill-mode-forwards opacity-0;
+  }
+}
+
+.glass-morphism {
+  @apply bg-white/70 dark:bg-[#1F1F1F]/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+}
+
+.premium-gradient-bg {
+  @apply bg-gradient-to-br from-white via-white to-neutral-50 dark:from-[#1F1F1F] dark:via-[#1F1F1F] dark:to-black;
 }

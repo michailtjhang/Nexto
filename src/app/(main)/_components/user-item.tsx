@@ -23,7 +23,7 @@ export const UserItem = () => {
             <DropdownMenuTrigger asChild>
                 <div
                     role="button"
-                    className="flex items-center text-sm p-3 w-full hover:bg-primary/5 transition"
+                    className="flex items-center text-sm p-3 w-full hover:bg-primary/5 transition duration-200 ease-in-out"
                 >
                     <div className="gap-x-2 flex items-center max-w-[150px]">
                         <Avatar className="h-5 w-5">
@@ -37,7 +37,7 @@ export const UserItem = () => {
                 </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-                className="w-80"
+                className="w-80 shadow-2xl glass-morphism border-none"
                 align="start"
                 alignOffset={11}
                 forceMount

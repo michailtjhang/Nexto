@@ -133,9 +133,10 @@ export const Navigation = () => {
             <aside
                 ref={sidebarRef}
                 className={cn(
-                    "group/sidebar h-full bg-secondary overflow-y-auto relative flex w-60 flex-col z-[99999]",
+                    "group/sidebar h-full bg-secondary overflow-y-auto relative flex w-60 flex-col z-[99999] sidebar-scrollbar",
                     isResetting && "transition-all ease-in-out duration-300",
-                    isMobile && "w-0"
+                    isMobile && "w-0 border-r-0",
+                    !isMobile && "border-r border-primary/5 shadow-sm"
                 )}
             >
                 <div
@@ -189,7 +190,7 @@ export const Navigation = () => {
                 <div
                     onMouseDown={handleMouseDown}
                     onClick={resetWidth}
-                    className="opacity-0 group-hover/sidebar:opacity-100 transition cursor-ew-resize absolute h-full w-1 bg-primary/10 right-0 top-0"
+                    className="opacity-0 group-hover/sidebar:opacity-100 transition cursor-ew-resize absolute h-full w-[2px] bg-primary/20 hover:bg-primary/40 right-0 top-0"
                 />
             </aside>
             <div
@@ -206,8 +207,16 @@ export const Navigation = () => {
                         onResetWidth={resetWidth}
                     />
                 ) : (
-                    <nav className="bg-transparent px-3 py-2 w-full">
-                        {isCollapsed && <MenuIcon onClick={resetWidth} role="button" className="h-6 w-6 text-muted-foreground" />}
+                    <nav className="bg-transparent px-3 py-2 w-full flex items-center justify-between">
+                        {isCollapsed && (
+                            <div 
+                                onClick={resetWidth} 
+                                role="button" 
+                                className="p-2 hover:bg-neutral-300 dark:hover:bg-neutral-600 rounded-md transition"
+                            >
+                                <MenuIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                        )}
                     </nav>
                 )}
             </div>
