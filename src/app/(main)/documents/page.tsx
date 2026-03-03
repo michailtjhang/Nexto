@@ -30,7 +30,7 @@ const DocumentsPage = () => {
     };
 
     return (
-        <div className="min-h-full flex flex-col items-center p-8 pt-32 space-y-8 animate-in fade-in duration-700">
+        <div className="min-h-full flex flex-col items-center p-8 pt-16 md:pt-32 space-y-8 animate-in fade-in duration-700">
             <div className="flex flex-col items-center space-y-4 max-w-md text-center">
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
@@ -39,7 +39,7 @@ const DocumentsPage = () => {
                         height="240"
                         width="240"
                         alt="Logo"
-                        className="relative grayscale-[20%] group-hover:grayscale-0 transition duration-500"
+                        className="relative grayscale-[20%] group-hover:grayscale-0 transition duration-500 w-[180px] h-[180px] md:w-[240px] md:h-[240px] object-contain"
                     />
                 </div>
 

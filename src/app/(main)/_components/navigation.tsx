@@ -169,12 +169,6 @@ export const Navigation = () => {
                         label="New page"
                         icon={PlusCircle}
                     />
-                    <SignOutButton>
-                        <Item
-                            label="Log out"
-                            icon={LogOut}
-                        />
-                    </SignOutButton>
                 </div>
                 <div className="mt-4">
                     <DocumentList />
@@ -194,6 +188,14 @@ export const Navigation = () => {
                             <TrashBox />
                         </PopoverContent>
                     </Popover>
+                </div>
+                <div className="mt-auto px-3 py-2">
+                    <SignOutButton>
+                        <Item
+                            label="Log out"
+                            icon={LogOut}
+                        />
+                    </SignOutButton>
                 </div>
                 <div
                     onMouseDown={handleMouseDown}
