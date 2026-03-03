@@ -7,7 +7,8 @@ import {
     PlusCircle,
     Search,
     Settings,
-    Trash
+    Trash,
+    LogOut
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { UserItem } from "./user-item";
+import { SignOutButton } from "@clerk/nextjs";
 import { Item } from "./item";
 import { DocumentList } from "./document-list";
 import { useSearch } from "@/hooks/use-search";
@@ -167,6 +169,12 @@ export const Navigation = () => {
                         label="New page"
                         icon={PlusCircle}
                     />
+                    <SignOutButton>
+                        <Item
+                            label="Log out"
+                            icon={LogOut}
+                        />
+                    </SignOutButton>
                 </div>
                 <div className="mt-4">
                     <DocumentList />
@@ -209,9 +217,9 @@ export const Navigation = () => {
                 ) : (
                     <nav className="bg-transparent px-3 py-2 w-full flex items-center justify-between">
                         {isCollapsed && (
-                            <div 
-                                onClick={resetWidth} 
-                                role="button" 
+                            <div
+                                onClick={resetWidth}
+                                role="button"
                                 className="p-2 hover:bg-neutral-300 dark:hover:bg-neutral-600 rounded-md transition"
                             >
                                 <MenuIcon className="h-5 w-5 text-muted-foreground" />
