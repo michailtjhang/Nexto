@@ -13,11 +13,12 @@ interface DocumentIdPageProps {
     }>;
 }
 
+const Editor = dynamic(() => import("@/components/editor/editor"), { ssr: false });
+
 const DocumentIdPage = ({
     params
 }: DocumentIdPageProps) => {
     const { documentId } = use(params);
-    const Editor = useMemo(() => dynamic(() => import("@/components/editor/editor"), { ssr: false }), []);
     const [document, setDocument] = useState<Document | null>(null);
 
     useEffect(() => {
@@ -55,7 +56,7 @@ const DocumentIdPage = ({
     }
 
     return (
-        <div className="pb-40">
+        <div className="pb-40 min-h-full">
             <Cover url={document.coverImage || undefined} />
             <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
                 <Toolbar initialData={document} />

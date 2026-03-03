@@ -35,18 +35,11 @@ const DocumentsPage = () => {
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                     <Image
-                        src="/empty.png"
+                        src="/logo.png"
                         height="240"
                         width="240"
-                        alt="Empty"
-                        className="relative dark:hidden grayscale-[20%] group-hover:grayscale-0 transition duration-500"
-                    />
-                    <Image
-                        src="/empty-dark.png"
-                        height="240"
-                        width="240"
-                        alt="Empty"
-                        className="relative hidden dark:block grayscale-[20%] group-hover:grayscale-0 transition duration-500"
+                        alt="Logo"
+                        className="relative grayscale-[20%] group-hover:grayscale-0 transition duration-500"
                     />
                 </div>
 

@@ -7,6 +7,8 @@ import { IconPicker } from "@/components/icon-picker";
 import { Button } from "@/components/ui/button";
 import TextareaAutosize from "react-textarea-autosize";
 import { useCoverImage } from "@/hooks/use-cover-image";
+import { useDebounceCallback } from "usehooks-ts";
+import { useEffect } from "react";
 
 interface ToolbarProps {
     initialData: Document;
@@ -28,20 +30,27 @@ export const Toolbar = ({
 
         setIsEditing(true);
         setTimeout(() => {
-            setValue(initialData.title);
             inputRef.current?.focus();
         }, 0);
     };
 
     const disableInput = () => setIsEditing(false);
 
-    const onInput = (value: string) => {
-        setValue(value);
+    const debouncedUpdate = useDebounceCallback((value: string) => {
         fetch(`/api/documents/${initialData.id}`, {
             method: "PATCH",
             body: JSON.stringify({ title: value || "Untitled" }),
         });
+    }, 500);
+
+    const onInput = (value: string) => {
+        setValue(value);
+        debouncedUpdate(value);
     };
+
+    useEffect(() => {
+        setValue(initialData.title);
+    }, [initialData.title]);
 
     const onKeyDown = (
         event: React.KeyboardEvent<HTMLTextAreaElement>

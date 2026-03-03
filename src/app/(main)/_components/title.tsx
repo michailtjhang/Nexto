@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useDebounceCallback } from "usehooks-ts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,6 @@ export const Title = ({
     const [isEditing, setIsEditing] = useState(false);
 
     const enableInput = () => {
-        setTitle(initialData.title || "Untitled");
         setIsEditing(true);
         setTimeout(() => {
             inputRef.current?.focus();
@@ -30,16 +30,23 @@ export const Title = ({
         setIsEditing(false);
     };
 
+    const debouncedUpdate = useDebounceCallback((value: string) => {
+        fetch(`/api/documents/${initialData.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ title: value.trim() || "Untitled" }),
+        });
+    }, 500);
+
     const onChange = (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
         setTitle(event.target.value);
-        // Auto-save logic here via fetch PATCH
-        fetch(`/api/documents/${initialData.id}`, {
-            method: "PATCH",
-            body: JSON.stringify({ title: event.target.value.trim() || "Untitled" }),
-        });
+        debouncedUpdate(event.target.value);
     };
+
+    useEffect(() => {
+        setTitle(initialData.title || "Untitled");
+    }, [initialData.title]);
 
     const onKeyDown = (
         event: React.KeyboardEvent<HTMLInputElement>
@@ -55,7 +62,6 @@ export const Title = ({
             {isEditing ? (
                 <Input
                     ref={inputRef}
-                    onClick={enableInput}
                     onBlur={disableInput}
                     onChange={onChange}
                     onKeyDown={onKeyDown}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Providers } from "@/components/providers/providers";
 import { ModalProvider } from "@/components/providers/modal-provider";
@@ -20,8 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
+      <html lang="en" suppressHydrationWarning className="h-full">
+        <body className={cn(inter.className, "h-full")}>
           <Providers>
             <ModalProvider />
             {children}
