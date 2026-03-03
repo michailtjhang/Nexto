@@ -9,6 +9,7 @@ import { Banner } from "./banner";
 import { Menu } from "./menu";
 import { Publish } from "./publish";
 import { Document } from "@/lib/db/schema";
+import { useDocumentStore } from "@/hooks/use-document-store";
 
 interface NavbarProps {
     isCollapsed: boolean;
@@ -23,6 +24,8 @@ export const Navbar = ({
     const documentId = params?.documentId as string;
     const [document, setDocument] = useState<Document | null>(null);
 
+    const { setId, setTitle } = useDocumentStore();
+
     useEffect(() => {
         const fetchDoc = async () => {
             if (!documentId) return;
@@ -33,9 +36,11 @@ export const Navbar = ({
             }
             const data = await res.json();
             setDocument(data);
+            setId(data.id);
+            setTitle(data.title);
         };
         fetchDoc();
-    }, [documentId]);
+    }, [documentId, setId, setTitle]);
 
     if (document === null) {
         return (

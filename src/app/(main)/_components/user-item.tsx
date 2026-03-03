@@ -62,9 +62,14 @@ export const UserItem = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                     asChild
-                    className="w-full cursor-pointer text-muted-foreground"
+                    className="w-full cursor-pointer text-muted-foreground flex items-center gap-x-2"
                 >
-                    <SignOutButton>Log out</SignOutButton>
+                    <SignOutButton>
+                        <div className="flex items-center w-full">
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Log out
+                        </div>
+                    </SignOutButton>
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

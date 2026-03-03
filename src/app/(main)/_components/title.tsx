@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Document } from "@/lib/db/schema";
+import { useDocumentStore } from "@/hooks/use-document-store";
 
 interface TitleProps {
     initialData: Document;
@@ -14,15 +15,15 @@ interface TitleProps {
 export const Title = ({
     initialData
 }: TitleProps) => {
+    const { title, setTitle } = useDocumentStore();
     const inputRef = useRef<HTMLInputElement>(null);
-    const [title, setTitle] = useState(initialData.title || "Untitled");
     const [isEditing, setIsEditing] = useState(false);
 
     const enableInput = () => {
         setIsEditing(true);
         setTimeout(() => {
             inputRef.current?.focus();
-            inputRef.current?.setSelectionRange(0, inputRef.current.value.length);
+            inputRef.current?.select();
         }, 0);
     };
 
@@ -43,10 +44,6 @@ export const Title = ({
         setTitle(event.target.value);
         debouncedUpdate(event.target.value);
     };
-
-    useEffect(() => {
-        setTitle(initialData.title || "Untitled");
-    }, [initialData.title]);
 
     const onKeyDown = (
         event: React.KeyboardEvent<HTMLInputElement>
@@ -76,7 +73,7 @@ export const Title = ({
                     className="font-normal h-auto p-1"
                 >
                     <span className="truncate">
-                        {initialData.title}
+                        {title || "Untitled"}
                     </span>
                 </Button>
             )}

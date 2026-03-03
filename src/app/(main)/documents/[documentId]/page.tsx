@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, use } from "react";
 import dynamic from "next/dynamic";
+import { useDocumentStore } from "@/hooks/use-document-store";
 import { Document } from "@/lib/db/schema";
 import { Toolbar } from "@/components/toolbar";
 import { Cover } from "@/components/cover";
@@ -21,16 +22,20 @@ const DocumentIdPage = ({
     const { documentId } = use(params);
     const [document, setDocument] = useState<Document | null>(null);
 
+    const { setId, setTitle } = useDocumentStore();
+
     useEffect(() => {
         const fetchDoc = async () => {
             const res = await fetch(`/api/documents/${documentId}`);
             if (!res.ok) return;
             const data = await res.json();
             setDocument(data);
+            setId(data.id);
+            setTitle(data.title);
         };
 
         fetchDoc();
-    }, [documentId]);
+    }, [documentId, setId, setTitle]);
 
     const onChange = (content: string) => {
         fetch(`/api/documents/${documentId}`, {
