@@ -32,22 +32,37 @@ export const SettingsModal = () => {
     }, [settings.isOpen, activeWorkspaceId]);
 
     const onInvite = async () => {
-        if (!email || !activeWorkspaceId) return;
-        setIsLoading(true);
+        if (!email) {
+            toast.error("Please enter an email address.");
+            return;
+        }
 
-        const res = await fetch("/api/workspaces/members", {
-            method: "POST",
-            body: JSON.stringify({ email, workspaceId: activeWorkspaceId })
-        });
+        if (!activeWorkspaceId) {
+            toast.error("Please select a workspace first.");
+            return;
+        }
 
-        setIsLoading(false);
-        if (res.ok) {
-            toast.success("Invitation sent!");
+        try {
+            setIsLoading(true);
+
+            const res = await fetch("/api/workspaces/members", {
+                method: "POST",
+                body: JSON.stringify({ email, workspaceId: activeWorkspaceId })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to invite member.");
+            }
+
+            toast.success("Invitation sent successfully!");
             const newMember = await res.json();
             setMembers((prev) => [...prev, newMember]);
             setEmail("");
-        } else {
-            toast.error("Failed to invite member.");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to invite member.");
+        } finally {
+            setIsLoading(false);
         }
     };
 

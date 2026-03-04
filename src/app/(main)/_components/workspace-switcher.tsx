@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
+import { useWorkspaceModal } from "@/hooks/use-workspace-modal";
 import { cn } from "@/lib/utils";
 
 export const WorkspaceSwitcher = () => {
     const { user } = useUser();
     const { activeWorkspaceId, setActiveWorkspaceId, workspaces, setWorkspaces } = useWorkspaceStore();
+    const { onOpen: onOpenWorkspaceModal } = useWorkspaceModal();
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -36,20 +38,9 @@ export const WorkspaceSwitcher = () => {
         setOpen(false);
     };
 
-    const onCreateWorkspace = async () => {
-        const name = window.prompt("Enter workspace name:");
-        if (!name) return;
-
-        const res = await fetch("/api/workspaces", {
-            method: "POST",
-            body: JSON.stringify({ name }),
-        });
-
-        if (res.ok) {
-            const newWs = await res.json();
-            setWorkspaces([...workspaces, newWs]);
-            setActiveWorkspaceId(newWs.id);
-        }
+    const onCreateWorkspace = () => {
+        setOpen(false);
+        onOpenWorkspaceModal();
     };
 
     return (
