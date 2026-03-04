@@ -1,15 +1,15 @@
 import { db } from "./index";
-import { documents, type NewDocument } from "./schema";
-import { eq, and, isNull, isNotNull, desc } from "drizzle-orm";
+import { documents, workspaces, workspaceMembers, type NewDocument, type Workspace, type WorkspaceMember } from "./schema";
+import { eq, and, isNull, isNotNull, desc, or } from "drizzle-orm";
 
-// Get all non-archived documents for a user (top level)
-export async function getRootDocuments(userId: string) {
+// Get all non-archived documents for a workspace (top level)
+export async function getRootDocuments(workspaceId: string) {
     return db
         .select()
         .from(documents)
         .where(
             and(
-                eq(documents.userId, userId),
+                eq(documents.workspaceId, workspaceId),
                 eq(documents.isArchived, false),
                 isNull(documents.parentId)
             )
@@ -17,14 +17,14 @@ export async function getRootDocuments(userId: string) {
         .orderBy(desc(documents.createdAt));
 }
 
-// Get child documents
-export async function getChildDocuments(userId: string, parentId: string) {
+// Get child documents in a workspace
+export async function getChildDocuments(workspaceId: string, parentId: string) {
     return db
         .select()
         .from(documents)
         .where(
             and(
-                eq(documents.userId, userId),
+                eq(documents.workspaceId, workspaceId),
                 eq(documents.isArchived, false),
                 eq(documents.parentId, parentId)
             )
@@ -52,14 +52,14 @@ export async function getArchivedDocuments(userId: string) {
         .orderBy(desc(documents.updatedAt));
 }
 
-// Search documents by title
-export async function searchDocuments(userId: string, query: string) {
+// Search documents by title within a workspace
+export async function searchDocuments(workspaceId: string, query: string) {
     const allDocs = await db
         .select()
         .from(documents)
         .where(
             and(
-                eq(documents.userId, userId),
+                eq(documents.workspaceId, workspaceId),
                 eq(documents.isArchived, false),
                 eq(documents.isPublished, false)
             )
@@ -69,10 +69,11 @@ export async function searchDocuments(userId: string, query: string) {
     );
 }
 
-// Create document
+// Create document in a workspace
 export async function createDocument(data: {
     title: string;
     userId: string;
+    workspaceId: string;
     parentId?: string;
 }) {
     const result = await db
@@ -80,10 +81,64 @@ export async function createDocument(data: {
         .values({
             title: data.title,
             userId: data.userId,
+            workspaceId: data.workspaceId,
             parentId: data.parentId ?? null,
         })
         .returning();
     return result[0];
+}
+
+// WORKSPACE QUERIES
+
+export async function createWorkspace(name: string, userId: string) {
+    const ws = await db
+        .insert(workspaces)
+        .values({ name, userId })
+        .returning();
+
+    // Auto-add owner as member
+    await db.insert(workspaceMembers).values({
+        workspaceId: ws[0].id,
+        userId,
+        email: "owner@internal.com", // In a real app, get user email from Clerk
+        role: "owner"
+    });
+
+    return ws[0];
+}
+
+export async function getWorkspacesByUserId(userId: string) {
+    // Get workspaces where user is owner OR a member
+    const memberOf = await db
+        .select()
+        .from(workspaceMembers)
+        .where(eq(workspaceMembers.userId, userId));
+
+    const workspaceIds = memberOf.map(m => m.workspaceId);
+
+    if (workspaceIds.length === 0) return [];
+
+    return db
+        .select()
+        .from(workspaces)
+        .where(or(
+            eq(workspaces.userId, userId),
+            ...workspaceIds.map(id => eq(workspaces.id, id))
+        ));
+}
+
+export async function addWorkspaceMember(workspaceId: string, email: string) {
+    return db
+        .insert(workspaceMembers)
+        .values({ workspaceId, email })
+        .returning();
+}
+
+export async function getWorkspaceMembers(workspaceId: string) {
+    return db
+        .select()
+        .from(workspaceMembers)
+        .where(eq(workspaceMembers.workspaceId, workspaceId));
 }
 
 // Update document

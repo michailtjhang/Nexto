@@ -9,6 +9,7 @@ import TextareaAutosize from "react-textarea-autosize";
 import { useCoverImage } from "@/hooks/use-cover-image";
 import { useDebounceCallback } from "usehooks-ts";
 import { useDocumentStore } from "@/hooks/use-document-store";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 interface ToolbarProps {
     initialData: Document;
@@ -22,6 +23,7 @@ export const Toolbar = ({
     const inputRef = useRef<ElementRef<"textarea">>(null);
     const [isEditing, setIsEditing] = useState(false);
     const { title, setTitle } = useDocumentStore();
+    const { activeWorkspaceId } = useWorkspaceStore();
 
     const coverImage = useCoverImage();
 
@@ -38,9 +40,14 @@ export const Toolbar = ({
     const disableInput = () => setIsEditing(false);
 
     const debouncedUpdate = useDebounceCallback((value: string) => {
+        if (!activeWorkspaceId) return;
+
         fetch(`/api/documents/${initialData.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ title: value || "Untitled" }),
+            body: JSON.stringify({
+                title: value || "Untitled",
+                workspaceId: activeWorkspaceId
+            }),
         });
     }, 500);
 

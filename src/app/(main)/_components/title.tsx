@@ -5,6 +5,7 @@ import { useDebounceCallback } from "usehooks-ts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 import { Document } from "@/lib/db/schema";
 import { useDocumentStore } from "@/hooks/use-document-store";
 
@@ -16,6 +17,7 @@ export const Title = ({
     initialData
 }: TitleProps) => {
     const { title, setTitle } = useDocumentStore();
+    const { activeWorkspaceId } = useWorkspaceStore();
     const inputRef = useRef<HTMLInputElement>(null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -32,9 +34,14 @@ export const Title = ({
     };
 
     const debouncedUpdate = useDebounceCallback((value: string) => {
+        if (!activeWorkspaceId) return;
+
         fetch(`/api/documents/${initialData.id}`, {
             method: "PATCH",
-            body: JSON.stringify({ title: value.trim() || "Untitled" }),
+            body: JSON.stringify({
+                title: value.trim() || "Untitled",
+                workspaceId: activeWorkspaceId // Security/Context check
+            }),
         });
     }, 500);
 

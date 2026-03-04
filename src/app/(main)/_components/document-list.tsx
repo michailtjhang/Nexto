@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { FileIcon } from "lucide-react";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 import { cn } from "@/lib/utils";
 import { Item } from "./item";
@@ -22,6 +23,7 @@ export const DocumentList = ({
     const router = useRouter();
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
+    const { activeWorkspaceId } = useWorkspaceStore();
 
     const onExpand = (documentId: string) => {
         setExpanded(prevExpanded => ({
@@ -32,11 +34,12 @@ export const DocumentList = ({
 
     useEffect(() => {
         const fetchDocuments = async () => {
-            // For now, using a simple fetch. In a real app, you might use TanStack Query or SWR.
-            // But we'll try to keep it simple with fetch for now.
-            const url = parentDocumentId
-                ? `/api/documents?parentId=${parentDocumentId}`
-                : `/api/documents`;
+            if (!activeWorkspaceId) return;
+
+            let url = `/api/documents?workspaceId=${activeWorkspaceId}`;
+            if (parentDocumentId) {
+                url += `&parentId=${parentDocumentId}`;
+            }
 
             const res = await fetch(url);
             if (!res.ok) {
@@ -48,7 +51,7 @@ export const DocumentList = ({
         };
 
         fetchDocuments();
-    }, [parentDocumentId, params?.documentId]); // Re-fetch when current doc changes (might have new children/archived)
+    }, [parentDocumentId, params?.documentId, activeWorkspaceId]);
 
     const onRedirect = (documentId: string) => {
         router.push(`/documents/${documentId}`);

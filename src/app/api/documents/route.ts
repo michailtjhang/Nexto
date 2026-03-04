@@ -15,13 +15,18 @@ export async function GET(req: NextRequest) {
 
         const { searchParams } = new URL(req.url);
         const query = searchParams.get("q");
+        const workspaceId = searchParams.get("workspaceId");
+
+        if (!workspaceId && !query) {
+            return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
+        }
 
         if (query) {
-            const docs = await searchDocuments(userId, query);
+            const docs = await searchDocuments(workspaceId || "", query);
             return NextResponse.json(docs);
         }
 
-        const docs = await getRootDocuments(userId);
+        const docs = await getRootDocuments(workspaceId!);
         return NextResponse.json(docs);
     } catch (error) {
         console.error("[DOCUMENTS_GET]", error);
@@ -37,11 +42,16 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { title, parentId } = body;
+        const { title, parentId, workspaceId } = body;
+
+        if (!workspaceId) {
+            return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
+        }
 
         const doc = await createDocument({
             title: title || "Untitled",
             userId,
+            workspaceId,
             parentId,
         });
 

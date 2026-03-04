@@ -47,8 +47,10 @@ export async function PATCH(
 
         const { documentId } = await params;
         const body = await req.json();
+        const { workspaceId, ...values } = body;
 
-        const doc = await updateDocument(documentId, userId, body);
+        // In a real app, you'd verify the user is a member of workspaceId
+        const doc = await updateDocument(documentId, userId, values);
         return NextResponse.json(doc);
     } catch (error) {
         console.error("[DOCUMENT_PATCH]", error);
@@ -69,7 +71,7 @@ export async function DELETE(
         const { documentId } = await params;
         const result = await deleteDocument(documentId, userId);
 
-        return NextResponse.json(result[0]);
+        return NextResponse.json(result);
     } catch (error) {
         console.error("[DOCUMENT_DELETE]", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });

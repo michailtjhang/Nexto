@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { UserItem } from "./user-item";
+import { WorkspaceSwitcher } from "./workspace-switcher";
 import { SignOutButton } from "@clerk/nextjs";
 import { Item } from "./item";
 import { DocumentList } from "./document-list";
@@ -25,6 +26,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TrashBox } from "./trash-box";
 import { Navbar } from "./navbar";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 export const Navigation = () => {
     const router = useRouter();
@@ -39,6 +41,8 @@ export const Navigation = () => {
     const navbarRef = useRef<ElementRef<"div">>(null);
     const [isResetting, setIsResetting] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(isMobile);
+    const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceStore();
+    const [workspaces, setWorkspaces] = useState<any[]>([]);
 
     useEffect(() => {
         if (isMobile) {
@@ -47,6 +51,20 @@ export const Navigation = () => {
             resetWidth();
         }
     }, [isMobile]);
+
+    useEffect(() => {
+        const fetchWorkspaces = async () => {
+            const res = await fetch("/api/workspaces");
+            if (!res.ok) return;
+            const data = await res.json();
+            setWorkspaces(data);
+
+            if (data.length > 0 && !activeWorkspaceId) {
+                setActiveWorkspaceId(data[0].id);
+            }
+        };
+        fetchWorkspaces();
+    }, [activeWorkspaceId, setActiveWorkspaceId]);
 
     useEffect(() => {
         if (isMobile) {
@@ -116,9 +134,17 @@ export const Navigation = () => {
     };
 
     const handleCreate = () => {
+        if (!activeWorkspaceId) {
+            toast.error("No active workspace found.");
+            return;
+        }
+
         const promise = fetch("/api/documents", {
             method: "POST",
-            body: JSON.stringify({ title: "Untitled" }),
+            body: JSON.stringify({
+                title: "Untitled",
+                workspaceId: activeWorkspaceId
+            }),
         })
             .then((res) => res.json())
             .then((doc) => router.push(`/documents/${doc.id}`));
@@ -153,6 +179,7 @@ export const Navigation = () => {
                 </div>
                 <div>
                     <UserItem />
+                    <WorkspaceSwitcher />
                     <Item
                         label="Search"
                         icon={Search}
