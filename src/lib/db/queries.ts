@@ -96,20 +96,29 @@ export async function createDocument(data: {
 // WORKSPACE QUERIES
 
 export async function createWorkspace(name: string, userId: string) {
-    const ws = await db
-        .insert(workspaces)
-        .values({ name, userId })
-        .returning();
+    try {
+        const ws = await db
+            .insert(workspaces)
+            .values({ name, userId })
+            .returning();
 
-    // Auto-add owner as member
-    await db.insert(workspaceMembers).values({
-        workspaceId: ws[0].id,
-        userId,
-        email: "owner@internal.com", // In a real app, get user email from Clerk
-        role: "owner"
-    });
+        if (!ws || ws.length === 0) {
+            throw new Error("Failed to insert workspace");
+        }
 
-    return ws[0];
+        // Auto-add owner as member
+        await db.insert(workspaceMembers).values({
+            workspaceId: ws[0].id,
+            userId,
+            email: "owner@internal.com", // In a real app, get user email from Clerk
+            role: "owner"
+        });
+
+        return ws[0];
+    } catch (error) {
+        console.error("DEBUG: createWorkspace error:", error);
+        throw error;
+    }
 }
 
 export async function getWorkspacesByUserId(userId: string) {

@@ -35,7 +35,10 @@ export const WorkspaceModal = () => {
                 body: JSON.stringify({ name }),
             });
 
-            if (!res.ok) throw new Error("Failed to create workspace");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to create workspace");
+            }
 
             const newWs = await res.json();
             setWorkspaces([...workspaces, newWs]);
@@ -43,8 +46,8 @@ export const WorkspaceModal = () => {
             toast.success("Workspace created!");
             setName("");
             onClose();
-        } catch (error) {
-            toast.error("Failed to create workspace.");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create workspace.");
         } finally {
             setIsLoading(false);
         }
