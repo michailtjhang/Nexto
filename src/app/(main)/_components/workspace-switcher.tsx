@@ -15,8 +15,7 @@ import { cn } from "@/lib/utils";
 
 export const WorkspaceSwitcher = () => {
     const { user } = useUser();
-    const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceStore();
-    const [workspaces, setWorkspaces] = useState<any[]>([]);
+    const { activeWorkspaceId, setActiveWorkspaceId, workspaces, setWorkspaces } = useWorkspaceStore();
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -28,7 +27,7 @@ export const WorkspaceSwitcher = () => {
             }
         };
         fetchWorkspaces();
-    }, []);
+    }, [setWorkspaces]);
 
     const activeWorkspace = workspaces.find((ws) => ws.id === activeWorkspaceId);
 
@@ -48,7 +47,7 @@ export const WorkspaceSwitcher = () => {
 
         if (res.ok) {
             const newWs = await res.json();
-            setWorkspaces((prev) => [...prev, newWs]);
+            setWorkspaces([...workspaces, newWs]);
             setActiveWorkspaceId(newWs.id);
         }
     };
@@ -82,18 +81,19 @@ export const WorkspaceSwitcher = () => {
                     {workspaces.map((workspace) => (
                         <div
                             key={workspace.id}
+                            role="button"
                             onClick={() => onSelect(workspace.id)}
                             className={cn(
-                                "flex items-center gap-x-2 p-2 hover:bg-primary/5 cursor-pointer transition text-sm",
-                                activeWorkspaceId === workspace.id && "bg-primary/5"
+                                "flex items-center gap-x-2 p-3 hover:bg-primary/10 cursor-pointer transition text-sm rounded-sm mx-1",
+                                activeWorkspaceId === workspace.id && "bg-primary/5 font-medium"
                             )}
                         >
-                            <div className="rounded-md bg-secondary p-1 h-6 w-6 flex items-center justify-center font-bold text-xs text-muted-foreground">
+                            <div className="rounded-md bg-secondary p-1 h-6 w-6 flex items-center justify-center font-bold text-xs text-muted-foreground ring-1 ring-primary/10">
                                 {workspace.name.charAt(0)}
                             </div>
                             <span className="flex-1 truncate">{workspace.name}</span>
                             {activeWorkspaceId === workspace.id && (
-                                <Check className="h-4 w-4" />
+                                <Check className="h-4 w-4 text-primary" />
                             )}
                         </div>
                     ))}

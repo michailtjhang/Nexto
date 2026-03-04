@@ -41,8 +41,7 @@ export const Navigation = () => {
     const navbarRef = useRef<ElementRef<"div">>(null);
     const [isResetting, setIsResetting] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(isMobile);
-    const { activeWorkspaceId, setActiveWorkspaceId } = useWorkspaceStore();
-    const [workspaces, setWorkspaces] = useState<any[]>([]);
+    const { activeWorkspaceId, setActiveWorkspaceId, setWorkspaces } = useWorkspaceStore();
 
     useEffect(() => {
         if (isMobile) {
@@ -64,7 +63,7 @@ export const Navigation = () => {
             }
         };
         fetchWorkspaces();
-    }, [activeWorkspaceId, setActiveWorkspaceId]);
+    }, [activeWorkspaceId, setActiveWorkspaceId, setWorkspaces]);
 
     useEffect(() => {
         if (isMobile) {
