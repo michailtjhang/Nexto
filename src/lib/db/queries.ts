@@ -69,12 +69,14 @@ export async function searchDocuments(workspaceId: string, query: string) {
     );
 }
 
-// Create document in a workspace
 export async function createDocument(data: {
     title: string;
     userId: string;
     workspaceId: string;
     parentId?: string;
+    content?: any;
+    emoji?: string;
+    coverImage?: string;
 }) {
     const result = await db
         .insert(documents)
@@ -83,6 +85,9 @@ export async function createDocument(data: {
             userId: data.userId,
             workspaceId: data.workspaceId,
             parentId: data.parentId ?? null,
+            content: data.content ?? null,
+            emoji: data.emoji ?? null,
+            coverImage: data.coverImage ?? null,
         })
         .returning();
     return result[0];

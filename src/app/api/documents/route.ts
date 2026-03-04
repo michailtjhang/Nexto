@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { title, parentId, workspaceId } = body;
+        const { title, parentId, workspaceId, emoji, content, coverImage } = body;
 
         if (!workspaceId) {
             return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
@@ -53,6 +53,9 @@ export async function POST(req: NextRequest) {
             userId,
             workspaceId,
             parentId,
+            emoji,
+            content,
+            coverImage,
         });
 
         return NextResponse.json(doc);

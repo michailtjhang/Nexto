@@ -3,18 +3,91 @@
 import Image from "next/image";
 import { PlusCircle } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
+
+const TEMPLATES = [
+    {
+        title: "Project Tracker",
+        emoji: "📊",
+        icon: "📊",
+        description: "Track your tasks and deadlines",
+        content: [
+            {
+                type: "heading",
+                props: { textColor: "default", backgroundColor: "default", textAlignment: "left", level: 1 },
+                content: [{ type: "text", text: "Project Tracker", styles: {} }],
+                children: []
+            },
+            {
+                type: "paragraph",
+                props: { textColor: "default", backgroundColor: "default", textAlignment: "left" },
+                content: [{ type: "text", text: "Use this template to keep track of your team's progress.", styles: {} }],
+                children: []
+            }
+        ]
+    },
+    {
+        title: "Reading List",
+        emoji: "📚",
+        icon: "📚",
+        description: "Organize your favorite books",
+        content: [
+            {
+                type: "heading",
+                props: { level: 1 },
+                content: [{ type: "text", text: "My Reading List", styles: {} }]
+            }
+        ]
+    },
+    {
+        title: "Meeting Notes",
+        emoji: "📝",
+        icon: "📝",
+        description: "Never miss a detail in meetings",
+        content: [
+            {
+                type: "heading",
+                props: { level: 1 },
+                content: [{ type: "text", text: "Meeting Notes", styles: {} }]
+            }
+        ]
+    },
+    {
+        title: "Personal Wiki",
+        emoji: "🏠",
+        icon: "🏠",
+        description: "A home for your long-term goals",
+        content: [
+            {
+                type: "heading",
+                props: { level: 1 },
+                content: [{ type: "text", text: "Personal Wiki", styles: {} }]
+            }
+        ]
+    }
+];
 
 const DocumentsPage = () => {
     const { user } = useUser();
     const router = useRouter();
+    const { activeWorkspaceId } = useWorkspaceStore();
 
     const onCreate = () => {
+        if (!activeWorkspaceId) {
+            toast.error("Please select a workspace first");
+            return;
+        }
+
         const promise = fetch("/api/documents", {
             method: "POST",
-            body: JSON.stringify({ title: "Untitled" }),
+            body: JSON.stringify({
+                title: "Untitled",
+                workspaceId: activeWorkspaceId
+            }),
         })
             .then((res) => {
                 if (!res.ok) throw new Error("Failed to create");
@@ -26,6 +99,34 @@ const DocumentsPage = () => {
             loading: "Creating a new note...",
             success: "New note created!",
             error: "Failed to create a new note.",
+        });
+    };
+
+    const onTemplateCreate = (template: typeof TEMPLATES[0]) => {
+        if (!activeWorkspaceId) {
+            toast.error("Please select a workspace first");
+            return;
+        }
+
+        const promise = fetch("/api/documents", {
+            method: "POST",
+            body: JSON.stringify({
+                title: template.title,
+                emoji: template.emoji,
+                workspaceId: activeWorkspaceId,
+                content: template.content,
+            }),
+        })
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to create from template");
+                return res.json();
+            })
+            .then((doc) => router.push(`/documents/${doc.id}`));
+
+        toast.promise(promise, {
+            loading: `Creating ${template.title}...`,
+            success: `${template.title} ready!`,
+            error: "Failed to create template.",
         });
     };
 
@@ -72,16 +173,29 @@ const DocumentsPage = () => {
 
             <div className="w-full max-w-2xl pt-8 border-t border-primary/5">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                    Workspace Overview
+                    Recommended Templates
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-10">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="aspect-square rounded-xl bg-secondary/30 animate-pulse border border-primary/5" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-10">
+                    {TEMPLATES.map((template) => (
+                        <div
+                            key={template.title}
+                            onClick={() => onTemplateCreate(template)}
+                            className="group relative flex flex-col gap-y-2 p-4 rounded-xl border border-primary/5 bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition hover:scale-[1.02] active:scale-95"
+                        >
+                            <div className="text-3xl mb-1">{template.icon}</div>
+                            <h4 className="font-semibold text-sm">{template.title}</h4>
+                            <p className="text-[10px] text-muted-foreground leading-tight">
+                                {template.description}
+                            </p>
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                                <PlusCircle className="h-4 w-4 text-primary" />
+                            </div>
+                        </div>
                     ))}
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default DocumentsPage;
