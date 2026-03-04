@@ -74,7 +74,7 @@ const TEMPLATES = [
 const DocumentsPage = () => {
     const { user } = useUser();
     const router = useRouter();
-    const { activeWorkspaceId } = useWorkspaceStore();
+    const { activeWorkspaceId, triggerRefresh } = useWorkspaceStore();
 
     const onCreate = () => {
         if (!activeWorkspaceId) {
@@ -84,13 +84,20 @@ const DocumentsPage = () => {
 
         const promise = fetch("/api/documents", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({
                 title: "Untitled",
                 workspaceId: activeWorkspaceId
             }),
         })
-            .then((res) => {
-                if (!res.ok) throw new Error("Failed to create");
+            .then(async (res) => {
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || "Failed to create");
+                }
+                triggerRefresh();
                 return res.json();
             })
             .then((doc) => router.push(`/documents/${doc.id}`));
@@ -110,6 +117,9 @@ const DocumentsPage = () => {
 
         const promise = fetch("/api/documents", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({
                 title: template.title,
                 emoji: template.emoji,
@@ -117,8 +127,12 @@ const DocumentsPage = () => {
                 content: template.content,
             }),
         })
-            .then((res) => {
-                if (!res.ok) throw new Error("Failed to create from template");
+            .then(async (res) => {
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || "Failed to create from template");
+                }
+                triggerRefresh();
                 return res.json();
             })
             .then((doc) => router.push(`/documents/${doc.id}`));

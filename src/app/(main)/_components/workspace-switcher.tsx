@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, MoreVertical, Plus, Trash, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 
@@ -9,15 +9,25 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 import { useWorkspaceModal } from "@/hooks/use-workspace-modal";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const WorkspaceSwitcher = () => {
     const { user } = useUser();
     const { activeWorkspaceId, setActiveWorkspaceId, workspaces, setWorkspaces } = useWorkspaceStore();
     const { onOpen: onOpenWorkspaceModal } = useWorkspaceModal();
+    const settings = useSettings();
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -41,6 +51,31 @@ export const WorkspaceSwitcher = () => {
     const onCreateWorkspace = () => {
         setOpen(false);
         onOpenWorkspaceModal();
+    };
+
+    const onDeleteWorkspace = async (id: string) => {
+        const confirm = window.confirm("Are you sure you want to delete this workspace? All documents will be lost.");
+        if (!confirm) return;
+
+        try {
+            const res = await fetch(`/api/workspaces/${id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) throw new Error("Failed to delete workspace");
+
+            toast.success("Workspace deleted");
+            const filteredWorkspaces = workspaces.filter(ws => ws.id !== id);
+            setWorkspaces(filteredWorkspaces);
+
+            if (filteredWorkspaces.length > 0) {
+                setActiveWorkspaceId(filteredWorkspaces[0].id);
+            } else {
+                setActiveWorkspaceId(null);
+            }
+        } catch (error) {
+            toast.error("Failed to delete workspace");
+        }
     };
 
     return (
@@ -72,19 +107,56 @@ export const WorkspaceSwitcher = () => {
                     {workspaces.map((workspace) => (
                         <div
                             key={workspace.id}
-                            role="button"
-                            onClick={() => onSelect(workspace.id)}
-                            className={cn(
-                                "flex items-center gap-x-2 p-3 hover:bg-primary/10 cursor-pointer transition text-sm rounded-sm mx-1",
-                                activeWorkspaceId === workspace.id && "bg-primary/5 font-medium"
-                            )}
+                            className="flex items-center gap-x-2 w-full"
                         >
-                            <div className="rounded-md bg-secondary p-1 h-6 w-6 flex items-center justify-center font-bold text-xs text-muted-foreground ring-1 ring-primary/10">
-                                {workspace.name.charAt(0)}
+                            <div
+                                role="button"
+                                onClick={() => onSelect(workspace.id)}
+                                className={cn(
+                                    "flex items-center gap-x-2 w-full p-2 rounded-md hover:bg-neutral-100 transition truncate",
+                                    activeWorkspaceId === workspace.id && "bg-neutral-100"
+                                )}
+                            >
+                                <div className="h-6 w-6 rounded-md bg-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                                    {workspace.name.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm truncate">
+                                    {workspace.name}
+                                </span>
+                                {activeWorkspaceId === workspace.id && (
+                                    <Check className="h-4 w-4 ml-auto text-indigo-600" />
+                                )}
                             </div>
-                            <span className="flex-1 truncate">{workspace.name}</span>
                             {activeWorkspaceId === workspace.id && (
-                                <Check className="h-4 w-4 text-primary" />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 shrink-0"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={settings.onOpen}>
+                                            <Settings className="h-4 w-4 mr-2" />
+                                            Settings
+                                        </DropdownMenuItem>
+                                        {workspace.userId === user?.id && (
+                                            <>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    onClick={() => onDeleteWorkspace(workspace.id)}
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                >
+                                                    <Trash className="h-4 w-4 mr-2" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </>
+                                        )}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             )}
                         </div>
                     ))}

@@ -9,12 +9,18 @@ import {
 
 export async function GET(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const { userId, sessionClaims } = await auth();
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const workspaces = await getWorkspacesByUserId(userId);
+        // Get email from session claims if available, otherwise we might need a clerkClient call
+        // Assuming clerk is configured to include email in session claims, or we just use userId.
+        // For better reliability, let's use the clerk backend client if needed, 
+        // but often email is in sessionClaims.primary_email
+        const email = (sessionClaims as any)?.email;
+
+        const workspaces = await getWorkspacesByUserId(userId, email);
 
         // If user has no workspaces, create a default one
         if (workspaces.length === 0) {

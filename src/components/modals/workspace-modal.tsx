@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 
 export const WorkspaceModal = () => {
     const { isOpen, onClose } = useWorkspaceModal();
-    const { workspaces, setWorkspaces, setActiveWorkspaceId } = useWorkspaceStore();
+    const { workspaces, setWorkspaces, setActiveWorkspaceId, triggerRefresh } = useWorkspaceStore();
     const [name, setName] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -32,6 +32,9 @@ export const WorkspaceModal = () => {
             setIsLoading(true);
             const res = await fetch("/api/workspaces", {
                 method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({ name }),
             });
 
@@ -43,6 +46,7 @@ export const WorkspaceModal = () => {
             const newWs = await res.json();
             setWorkspaces([...workspaces, newWs]);
             setActiveWorkspaceId(newWs.id);
+            triggerRefresh();
             toast.success("Workspace created!");
             setName("");
             onClose();

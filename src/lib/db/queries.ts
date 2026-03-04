@@ -121,8 +121,18 @@ export async function createWorkspace(name: string, userId: string) {
     }
 }
 
-export async function getWorkspacesByUserId(userId: string) {
-    // Get workspaces where user is owner OR a member
+export async function getWorkspacesByUserId(userId: string, email?: string) {
+    // 1. If we have an email, first link any unlinked invitations
+    if (email) {
+        await db.update(workspaceMembers)
+            .set({ userId })
+            .where(and(
+                eq(workspaceMembers.email, email),
+                isNull(workspaceMembers.userId)
+            ));
+    }
+
+    // 2. Get workspaces where user is owner OR a member (now that we've updated memberships)
     const memberOf = await db
         .select()
         .from(workspaceMembers)
@@ -130,15 +140,22 @@ export async function getWorkspacesByUserId(userId: string) {
 
     const workspaceIds = memberOf.map(m => m.workspaceId);
 
-    if (workspaceIds.length === 0) return [];
+    // If they aren't owner or member of anything, return empty
+    // (A separate check in the API handles creating the default workspace)
+    const ownedWorkspaces = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.userId, userId));
+
+    const ownedIds = ownedWorkspaces.map(w => w.id);
+    const allIds = Array.from(new Set([...workspaceIds, ...ownedIds]));
+
+    if (allIds.length === 0) return [];
 
     return db
         .select()
         .from(workspaces)
-        .where(or(
-            eq(workspaces.userId, userId),
-            ...workspaceIds.map(id => eq(workspaces.id, id))
-        ));
+        .where(or(...allIds.map(id => eq(workspaces.id, id))));
 }
 
 export async function addWorkspaceMember(workspaceId: string, email: string) {
@@ -153,6 +170,24 @@ export async function getWorkspaceMembers(workspaceId: string) {
         .select()
         .from(workspaceMembers)
         .where(eq(workspaceMembers.workspaceId, workspaceId));
+}
+
+export async function removeWorkspaceMember(memberId: string) {
+    return db
+        .delete(workspaceMembers)
+        .where(eq(workspaceMembers.id, memberId))
+        .returning();
+}
+
+export async function deleteWorkspace(workspaceId: string, userId: string) {
+    // Only owner can delete
+    return db
+        .delete(workspaces)
+        .where(and(
+            eq(workspaces.id, workspaceId),
+            eq(workspaces.userId, userId)
+        ))
+        .returning();
 }
 
 // Update document

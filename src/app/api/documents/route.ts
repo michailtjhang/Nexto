@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
+        console.log("DEBUG: POST /api/documents body:", JSON.stringify(body, null, 2));
         const { title, parentId, workspaceId, emoji, content, coverImage } = body;
 
         if (!workspaceId) {

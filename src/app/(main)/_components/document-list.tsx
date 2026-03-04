@@ -23,7 +23,7 @@ export const DocumentList = ({
     const router = useRouter();
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
     const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
-    const { activeWorkspaceId } = useWorkspaceStore();
+    const { activeWorkspaceId, refreshCounter } = useWorkspaceStore();
 
     const onExpand = (documentId: string) => {
         setExpanded(prevExpanded => ({
@@ -51,7 +51,7 @@ export const DocumentList = ({
         };
 
         fetchDocuments();
-    }, [parentDocumentId, params?.documentId, activeWorkspaceId]);
+    }, [parentDocumentId, params?.documentId, activeWorkspaceId, refreshCounter]);
 
     const onRedirect = (documentId: string) => {
         router.push(`/documents/${documentId}`);

@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +50,7 @@ export const Item = ({
 }: ItemProps) => {
     const { user } = useUser();
     const router = useRouter();
+    const { triggerRefresh } = useWorkspaceStore();
 
     const handleExpand = (
         event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -77,6 +79,7 @@ export const Item = ({
                 if (!expanded) {
                     onExpand?.();
                 }
+                triggerRefresh();
                 router.push(`/documents/${doc.id}`);
             });
 
@@ -96,6 +99,7 @@ export const Item = ({
             method: "PATCH",
         }).then((res) => {
             if (!res.ok) throw new Error("Failed to archive");
+            triggerRefresh();
             router.push("/documents");
         });
 

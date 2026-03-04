@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UserPlus, User as UserIcon, ShieldCheck } from "lucide-react";
+import { UserPlus, User as UserIcon, ShieldCheck, Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export const SettingsModal = () => {
@@ -30,6 +30,27 @@ export const SettingsModal = () => {
                 .then(setMembers);
         }
     }, [settings.isOpen, activeWorkspaceId]);
+
+    const onRemoveMember = async (memberId: string) => {
+        const confirm = window.confirm("Are you sure you want to remove this member?");
+        if (!confirm) return;
+
+        try {
+            setIsLoading(true);
+            const res = await fetch(`/api/workspaces/members?memberId=${memberId}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) throw new Error("Failed to remove member");
+
+            toast.success("Member removed");
+            setMembers((prev) => prev.filter((m) => m.id !== memberId));
+        } catch (error) {
+            toast.error("Failed to remove member");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const onInvite = async () => {
         if (!email) {
@@ -118,9 +139,24 @@ export const SettingsModal = () => {
                                         {member.email}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-x-1 text-[0.7rem] text-muted-foreground">
-                                    <ShieldCheck className="h-3 w-3" />
-                                    {member.role}
+                                <div className="flex items-center gap-x-2">
+                                    <div className="flex flex-col items-end">
+                                        <div className="flex items-center gap-x-1 text-[0.7rem] text-muted-foreground uppercase font-bold">
+                                            <ShieldCheck className="h-3 w-3" />
+                                            {member.role}
+                                        </div>
+                                    </div>
+                                    {member.role !== "owner" && (
+                                        <Button
+                                            onClick={() => onRemoveMember(member.id)}
+                                            disabled={isLoading}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"
+                                        >
+                                            <Trash className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         ))}
