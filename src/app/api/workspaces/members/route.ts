@@ -1,8 +1,6 @@
-import React from "react";
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { Resend } from "resend";
-import { InvitationEmail } from "@/components/emails/invitation-email";
+import nodemailer from "nodemailer";
 import { db } from "@/lib/db";
 import { workspaces } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -12,9 +10,38 @@ import {
     removeWorkspaceMember,
 } from "@/lib/db/queries";
 
-// Initialize Resend with a dummy key if not provided to prevent crashes on startup, 
-// though we'll check properly inside the handler.
-const resend = new Resend(process.env.RESEND_API_KEY || "temp");
+// Nodemailer Transporter Configuration
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: process.env.SMTP_PORT === "465", // true for 465, false for other ports
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
+const getInvitationHtml = (workspaceName: string, inviterName: string, loginUrl: string) => `
+<div style="font-family: sans-serif; padding: 20px; backgroundColor: #f9f9f9; border-radius: 10px; border: 1px solid #ddd; max-width: 600px; margin: 0 auto">
+    <h1 style="color: #333; font-size: 24px">Undangan Join Workspace! 🚀</h1>
+    <p style="color: #555; font-size: 16px; line-height: 1.5">
+        Halo! <strong>${inviterName}</strong> mengundang kamu untuk bergabung ke workspace <strong>"${workspaceName}"</strong> di Nexto.
+    </p>
+    <div style="text-align: center; margin: 30px 0">
+        <a href="${loginUrl}" style="background-color: #4F46E5; color: white; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: bold; display: inline-block">
+            Buka Nexto Sekarang
+        </a>
+    </div>
+    <p style="color: #888; font-size: 12px">
+        Jika tombol di atas tidak berfungsi, salin URL ini ke browser kamu:<br />
+        <a href="${loginUrl}" style="color: #4F46E5">${loginUrl}</a>
+    </p>
+    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0" />
+    <p style="color: #aaa; font-size: 11px; text-align: center">
+        Pesan ini dikirim otomatis oleh sistem Nexto (via SMTP).
+    </p>
+</div>
+`;
 
 export async function GET(req: NextRequest) {
     try {
@@ -52,9 +79,9 @@ export async function POST(req: NextRequest) {
         // 1. Add to database
         const member = await addWorkspaceMember(workspaceId, email);
 
-        // 2. Try to send email via Resend
-        if (process.env.RESEND_API_KEY) {
-            console.log("DEBUG: Resend API Key found. Attempting to send email...");
+        // 2. Try to send email via SMTP (Nodemailer)
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+            console.log("DEBUG: SMTP Config found. Attempting to send invitation email...");
             try {
                 const workspace = await db
                     .select()
@@ -63,30 +90,25 @@ export async function POST(req: NextRequest) {
                     .then(res => res[0]);
 
                 if (workspace) {
-                    const data = await resend.emails.send({
-                        from: 'Nexto <onboarding@resend.dev>',
+                    const inviterName = user.firstName || user.username || "Seseorang";
+                    const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexto-ten.vercel.app'}/documents`;
+
+                    await transporter.sendMail({
+                        from: `"${inviterName} via Nexto" <${process.env.MAIL_FROM || process.env.SMTP_USER}>`,
                         to: email,
                         subject: `Undangan Join Workspace: ${workspace.name}`,
-                        react: React.createElement(InvitationEmail, {
-                            workspaceName: workspace.name,
-                            inviterName: user.firstName || user.username || "Seseorang",
-                            loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexto-ten.vercel.app'}/documents`
-                        }),
+                        html: getInvitationHtml(workspace.name, inviterName, loginUrl),
                     });
 
-                    if (data.error) {
-                        console.error("DEBUG: Resend API Error:", JSON.stringify(data.error, null, 2));
-                    } else {
-                        console.log(`DEBUG: Invitation email sent successfully, ID: ${data.data?.id}`);
-                    }
+                    console.log(`DEBUG: Invitation email sent successfully to ${email} via SMTP.`);
                 } else {
                     console.error("DEBUG: Workspace not found for ID:", workspaceId);
                 }
             } catch (emailError) {
-                console.error("DEBUG: Exception in Resend logic:", emailError);
+                console.error("DEBUG: Failed to send email via SMTP:", emailError);
             }
         } else {
-            console.error("DEBUG: RESEND_API_KEY is not defined in environment variables.");
+            console.warn("DEBUG: SMTP credentials not fully defined. Skipping email notification.");
         }
 
         return NextResponse.json(member[0]);
