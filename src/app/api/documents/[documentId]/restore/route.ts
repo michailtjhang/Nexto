@@ -19,11 +19,11 @@ export async function PATCH(
         if (doc?.parentId) {
             const parent = await getDocumentById(doc.parentId);
             if (parent?.isArchived) {
-                await restoreDocument(parent.id, userId);
+                await restoreDocument(parent.id);
             }
         }
 
-        const result = await restoreDocument(documentId, userId);
+        const result = await restoreDocument(documentId);
         return NextResponse.json(result[0]);
     } catch (error) {
         console.error("[RESTORE_PATCH]", error);

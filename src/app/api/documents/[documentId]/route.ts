@@ -32,7 +32,7 @@ export async function GET(
             if (!doc.workspaceId) {
                 return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
             }
-            const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+            const isMember = await isMemberOfWorkspace(doc.workspaceId!, userId, email);
             if (doc.userId !== userId && !isMember) {
                 return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
             }
@@ -72,7 +72,7 @@ export async function PATCH(
         if (!doc.workspaceId) {
             return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
         }
-        const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+        const isMember = await isMemberOfWorkspace(doc.workspaceId!, userId, email);
         if (doc.userId !== userId && !isMember) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -110,7 +110,7 @@ export async function DELETE(
         if (!doc.workspaceId) {
             return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
         }
-        const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+        const isMember = await isMemberOfWorkspace(doc.workspaceId!, userId, email);
         if (doc.userId !== userId && !isMember) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }

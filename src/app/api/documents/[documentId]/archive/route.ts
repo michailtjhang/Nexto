@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { archiveDocument, getChildDocuments } from "@/lib/db/queries";
+import { archiveDocument, getChildDocuments, getDocumentById } from "@/lib/db/queries";
 import { db } from "@/lib/db";
 import { documents } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-async function archiveRecursive(docId: string, userId: string) {
-    await archiveDocument(docId, userId);
-    const children = await getChildDocuments(userId, docId);
+async function archiveRecursive(docId: string) {
+    const doc = await getDocumentById(docId);
+    if (!doc) return;
+
+    await archiveDocument(docId);
+
+    // getChildDocuments(workspaceId, parentId)
+    if (!doc.workspaceId) return;
+    const children = await getChildDocuments(doc.workspaceId!, docId);
     for (const child of children) {
-        await archiveRecursive(child.id, userId);
+        await archiveRecursive(child.id);
     }
 }
 
@@ -24,7 +30,7 @@ export async function PATCH(
         }
 
         const { documentId } = await params;
-        await archiveRecursive(documentId, userId);
+        await archiveRecursive(documentId);
 
         return NextResponse.json({ success: true });
     } catch (error) {

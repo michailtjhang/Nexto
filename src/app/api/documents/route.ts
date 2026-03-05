@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Verify membership for creation
-        const isMember = await isMemberOfWorkspace(workspaceId, userId, email);
+        const isMember = await isMemberOfWorkspace(workspaceId as string, userId, email);
         if (!isMember) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
