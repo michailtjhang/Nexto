@@ -1,3 +1,4 @@
+import React from "react";
 import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { Resend } from "resend";
@@ -11,7 +12,9 @@ import {
     removeWorkspaceMember,
 } from "@/lib/db/queries";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with a dummy key if not provided to prevent crashes on startup, 
+// though we'll check properly inside the handler.
+const resend = new Resend(process.env.RESEND_API_KEY || "temp");
 
 export async function GET(req: NextRequest) {
     try {
@@ -51,6 +54,7 @@ export async function POST(req: NextRequest) {
 
         // 2. Try to send email via Resend
         if (process.env.RESEND_API_KEY) {
+            console.log("DEBUG: Resend API Key found. Attempting to send email...");
             try {
                 const workspace = await db
                     .select()
@@ -63,22 +67,26 @@ export async function POST(req: NextRequest) {
                         from: 'Nexto <onboarding@resend.dev>',
                         to: email,
                         subject: `Undangan Join Workspace: ${workspace.name}`,
-                        react: InvitationEmail({
+                        react: React.createElement(InvitationEmail, {
                             workspaceName: workspace.name,
                             inviterName: user.firstName || user.username || "Seseorang",
                             loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexto-ten.vercel.app'}/documents`
-                        }) as React.ReactElement,
+                        }),
                     });
 
                     if (data.error) {
-                        console.error("DEBUG: Resend API Error:", data.error);
+                        console.error("DEBUG: Resend API Error:", JSON.stringify(data.error, null, 2));
                     } else {
                         console.log(`DEBUG: Invitation email sent successfully, ID: ${data.data?.id}`);
                     }
+                } else {
+                    console.error("DEBUG: Workspace not found for ID:", workspaceId);
                 }
             } catch (emailError) {
                 console.error("DEBUG: Exception in Resend logic:", emailError);
             }
+        } else {
+            console.error("DEBUG: RESEND_API_KEY is not defined in environment variables.");
         }
 
         return NextResponse.json(member[0]);
