@@ -15,6 +15,7 @@ import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 import {
     DropdownMenu,
     DropdownMenuTrigger,
@@ -90,10 +91,7 @@ export const Item = ({
         });
     };
 
-    const onArchive = (
-        event: React.MouseEvent<HTMLDivElement, MouseEvent>
-    ) => {
-        event.stopPropagation();
+    const onArchive = () => {
         if (!id) return;
         const promise = fetch(`/api/documents/${id}/archive`, {
             method: "PATCH",
@@ -161,10 +159,12 @@ export const Item = ({
                             side="right"
                             forceMount
                         >
-                            <DropdownMenuItem onClick={onArchive}>
-                                <Trash className="h-4 w-4 mr-2" />
-                                Delete
-                            </DropdownMenuItem>
+                            <ConfirmModal onConfirm={onArchive}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Delete
+                                </DropdownMenuItem>
+                            </ConfirmModal>
                             <DropdownMenuSeparator />
                             <div className="text-xs p-2 text-muted-foreground">
                                 Last edited by: {user?.fullName}
