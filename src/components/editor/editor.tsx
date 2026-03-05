@@ -13,6 +13,7 @@ import {
     BlockNoteView
 } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
+import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing";
 
 interface EditorProps {
@@ -27,13 +28,17 @@ const Editor = ({
     editable
 }: EditorProps) => {
     const { resolvedTheme } = useTheme();
-    const { startUpload } = useUploadThing("imageUploader");
+    const { startUpload } = useUploadThing("mediaUploader");
 
     const handleUpload = async (file: File) => {
-        const res = await startUpload([file]);
+        try {
+            const res = await startUpload([file]);
 
-        if (res?.[0].url) {
-            return res[0].url;
+            if (res?.[0].url) {
+                return res[0].url;
+            }
+        } catch (error) {
+            toast.error("Failed to upload file. Check your internet connection or file size.");
         }
 
         throw new Error("Failed to upload file");

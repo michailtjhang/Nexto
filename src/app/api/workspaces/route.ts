@@ -15,14 +15,19 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress
+            || user.emailAddresses[0]?.emailAddress;
+
+        if (!email) {
+            return NextResponse.json({ error: "User email not found" }, { status: 400 });
+        }
 
         let workspaces = await getWorkspacesByUserId(userId, email);
 
         // Ensure user has a personal workspace
         let personalWs = await getPersonalWorkspace(userId);
         if (!personalWs) {
-            personalWs = await createWorkspace("My Workspace", userId, email!, true);
+            personalWs = await createWorkspace("My Workspace", userId, email, true);
             // Refresh list to include newly created personal workspace
             workspaces = await getWorkspacesByUserId(userId, email);
         }
@@ -43,12 +48,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress
+            || user.emailAddresses[0]?.emailAddress;
+
+        if (!email) {
+            return NextResponse.json({ error: "User email not found" }, { status: 400 });
+        }
 
         const body = await req.json();
         const { name } = body;
 
-        const workspace = await createWorkspace(name || "Untitled Workspace", userId, email!, false);
+        const workspace = await createWorkspace(name || "Untitled Workspace", userId, email, false);
 
         return NextResponse.json(workspace);
     } catch (error) {
