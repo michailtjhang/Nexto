@@ -95,7 +95,7 @@ export async function createDocument(data: {
 
 // WORKSPACE QUERIES
 
-export async function createWorkspace(name: string, userId: string) {
+export async function createWorkspace(name: string, userId: string, email: string) {
     try {
         const ws = await db
             .insert(workspaces)
@@ -106,11 +106,11 @@ export async function createWorkspace(name: string, userId: string) {
             throw new Error("Failed to insert workspace");
         }
 
-        // Auto-add owner as member
+        // Auto-add owner as member with actual email
         await db.insert(workspaceMembers).values({
             workspaceId: ws[0].id,
             userId,
-            email: "owner@internal.com", // In a real app, get user email from Clerk
+            email,
             role: "owner"
         });
 
@@ -177,6 +177,26 @@ export async function removeWorkspaceMember(memberId: string) {
         .delete(workspaceMembers)
         .where(eq(workspaceMembers.id, memberId))
         .returning();
+}
+
+export async function getWorkspaceMemberById(id: string) {
+    const result = await db
+        .select()
+        .from(workspaceMembers)
+        .where(eq(workspaceMembers.id, id));
+    return result[0] ?? null;
+}
+
+export async function isWorkspaceOwner(workspaceId: string, userId: string) {
+    const member = await db
+        .select()
+        .from(workspaceMembers)
+        .where(and(
+            eq(workspaceMembers.workspaceId, workspaceId),
+            eq(workspaceMembers.userId, userId),
+            eq(workspaceMembers.role, "owner")
+        ));
+    return member.length > 0;
 }
 
 export async function isMemberOfWorkspace(workspaceId: string, userId: string, email?: string) {

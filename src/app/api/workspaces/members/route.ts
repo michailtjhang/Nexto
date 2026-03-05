@@ -8,6 +8,8 @@ import {
     addWorkspaceMember,
     getWorkspaceMembers,
     removeWorkspaceMember,
+    isWorkspaceOwner,
+    getWorkspaceMemberById,
 } from "@/lib/db/queries";
 
 // Nodemailer Transporter Configuration
@@ -76,6 +78,12 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { email, workspaceId } = body;
 
+        // Verify requester is owner
+        const isOwner = await isWorkspaceOwner(workspaceId, userId);
+        if (!isOwner) {
+            return NextResponse.json({ error: "Only owners can invite members" }, { status: 403 });
+        }
+
         // 1. Add to database
         const member = await addWorkspaceMember(workspaceId, email);
 
@@ -130,6 +138,17 @@ export async function DELETE(req: NextRequest) {
 
         if (!memberId) {
             return NextResponse.json({ error: "Member ID required" }, { status: 400 });
+        }
+
+        const memberToRemove = await getWorkspaceMemberById(memberId);
+        if (!memberToRemove) {
+            return NextResponse.json({ error: "Member not found" }, { status: 404 });
+        }
+
+        // Verify requester is owner
+        const isOwner = await isWorkspaceOwner(memberToRemove.workspaceId, userId);
+        if (!isOwner && memberToRemove.userId !== userId) {
+            return NextResponse.json({ error: "Unauthorized to remove member" }, { status: 403 });
         }
 
         await removeWorkspaceMember(memberId);

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
         // If user has no workspaces, create a default one
         if (workspaces.length === 0) {
-            const defaultWs = await createWorkspace("My Workspace", userId);
+            const defaultWs = await createWorkspace("My Workspace", userId, email!);
             return NextResponse.json([defaultWs]);
         }
 
@@ -36,14 +36,18 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const { userId } = await auth();
-        if (!userId) {
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         const body = await req.json();
         const { name } = body;
 
-        const workspace = await createWorkspace(name || "Untitled Workspace", userId);
+        const workspace = await createWorkspace(name || "Untitled Workspace", userId, email!);
 
         return NextResponse.json(workspace);
     } catch (error) {

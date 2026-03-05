@@ -99,7 +99,7 @@ export const WorkspaceSwitcher = () => {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="start">
+            <PopoverContent className="w-64 p-0 dark:bg-[#2c2c2c] dark:border-neutral-800" align="start">
                 <div className="flex flex-col">
                     <div className="p-2 text-xs font-medium text-muted-foreground">
                         {user?.emailAddresses[0].emailAddress}
@@ -113,8 +113,8 @@ export const WorkspaceSwitcher = () => {
                                 role="button"
                                 onClick={() => onSelect(workspace.id)}
                                 className={cn(
-                                    "flex items-center gap-x-2 w-full p-2 rounded-md hover:bg-neutral-100 transition truncate",
-                                    activeWorkspaceId === workspace.id && "bg-neutral-100"
+                                    "flex items-center gap-x-2 w-full p-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800 transition truncate",
+                                    activeWorkspaceId === workspace.id && "bg-neutral-100 dark:bg-neutral-800"
                                 )}
                             >
                                 <div className="h-6 w-6 rounded-md bg-indigo-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
@@ -124,7 +124,7 @@ export const WorkspaceSwitcher = () => {
                                     {workspace.name}
                                 </span>
                                 {activeWorkspaceId === workspace.id && (
-                                    <Check className="h-4 w-4 ml-auto text-indigo-600" />
+                                    <Check className="h-4 w-4 ml-auto text-indigo-600 dark:text-indigo-400" />
                                 )}
                             </div>
                             {activeWorkspaceId === workspace.id && (

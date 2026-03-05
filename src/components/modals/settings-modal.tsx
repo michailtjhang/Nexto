@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import {
     Dialog,
     DialogContent,
@@ -17,8 +18,9 @@ import { UserPlus, User as UserIcon, ShieldCheck, Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export const SettingsModal = () => {
+    const { user } = useUser();
     const settings = useSettings();
-    const { activeWorkspaceId } = useWorkspaceStore();
+    const { activeWorkspaceId, workspaces } = useWorkspaceStore();
     const [email, setEmail] = useState("");
     const [members, setMembers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +32,10 @@ export const SettingsModal = () => {
                 .then(setMembers);
         }
     }, [settings.isOpen, activeWorkspaceId]);
+
+    const activeWorkspace = workspaces.find(ws => ws.id === activeWorkspaceId);
+    const isOwner = activeWorkspace?.userId === user?.id;
+    const currentUserMember = members.find(m => m.userId === user?.id);
 
     const onRemoveMember = async (memberId: string) => {
         const confirm = window.confirm("Are you sure you want to remove this member?");
@@ -109,25 +115,31 @@ export const SettingsModal = () => {
                     <div className="flex flex-col gap-y-1">
                         <Label>Team Members</Label>
                         <span className="text-[0.8rem] text-muted-foreground">
-                            Invite people to this workspace by email
+                            {isOwner
+                                ? "Invite people to this workspace by email"
+                                : "View members of this workspace"
+                            }
                         </span>
                     </div>
-                    <div className="flex gap-x-2">
-                        <Input
-                            placeholder="Email address"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            disabled={isLoading}
-                        />
-                        <Button
-                            onClick={onInvite}
-                            disabled={isLoading || !email}
-                            size="sm"
-                        >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            Invite
-                        </Button>
-                    </div>
+                    {/* Only show invite input if owner */}
+                    {isOwner && (
+                        <div className="flex gap-x-2">
+                            <Input
+                                placeholder="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={isLoading}
+                            />
+                            <Button
+                                onClick={onInvite}
+                                disabled={isLoading || !email}
+                                size="sm"
+                            >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                Invite
+                            </Button>
+                        </div>
+                    )}
                     <div className="max-h-[200px] overflow-y-auto space-y-2">
                         {members.map((member) => (
                             <div key={member.id} className="flex items-center justify-between p-2 border rounded-md">
@@ -146,13 +158,14 @@ export const SettingsModal = () => {
                                             {member.role}
                                         </div>
                                     </div>
-                                    {member.role !== "owner" && (
+                                    {/* Only owner can remove others, OR user can remove themselves (except if they are the owner) */}
+                                    {((isOwner && member.role !== "owner") || (!isOwner && member.userId === user?.id)) && (
                                         <Button
                                             onClick={() => onRemoveMember(member.id)}
                                             disabled={isLoading}
                                             variant="ghost"
                                             size="sm"
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition"
+                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-neutral-100 transition"
                                         >
                                             <Trash className="h-4 w-4" />
                                         </Button>
