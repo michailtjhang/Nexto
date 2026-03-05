@@ -22,6 +22,7 @@ import { useWorkspaceModal } from "@/hooks/use-workspace-modal";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 
 export const WorkspaceSwitcher = () => {
     const { user } = useUser();
@@ -30,14 +31,15 @@ export const WorkspaceSwitcher = () => {
     const settings = useSettings();
     const [open, setOpen] = useState(false);
 
+    const fetchWorkspaces = async () => {
+        const res = await fetch("/api/workspaces");
+        if (res.ok) {
+            const data = await res.json();
+            setWorkspaces(data);
+        }
+    };
+
     useEffect(() => {
-        const fetchWorkspaces = async () => {
-            const res = await fetch("/api/workspaces");
-            if (res.ok) {
-                const data = await res.json();
-                setWorkspaces(data);
-            }
-        };
         fetchWorkspaces();
     }, [setWorkspaces]);
 
@@ -53,25 +55,26 @@ export const WorkspaceSwitcher = () => {
         onOpenWorkspaceModal();
     };
 
-    const onDeleteWorkspace = async (id: string) => {
-        const confirm = window.confirm("Are you sure you want to delete this workspace? All documents will be lost.");
-        if (!confirm) return;
-
+    const onDeleteWorkspace = async (workspaceId: string) => {
         try {
-            const res = await fetch(`/api/workspaces/${id}`, {
+            const res = await fetch(`/api/workspaces/${workspaceId}`, {
                 method: "DELETE",
             });
 
             if (!res.ok) throw new Error("Failed to delete workspace");
 
             toast.success("Workspace deleted");
-            const filteredWorkspaces = workspaces.filter(ws => ws.id !== id);
-            setWorkspaces(filteredWorkspaces);
+            // Re-fetch workspaces to update the list
+            await fetchWorkspaces();
 
-            if (filteredWorkspaces.length > 0) {
-                setActiveWorkspaceId(filteredWorkspaces[0].id);
-            } else {
-                setActiveWorkspaceId(null);
+            // If the deleted workspace was the active one, switch to another or null
+            if (activeWorkspaceId === workspaceId) {
+                const remainingWorkspaces = workspaces.filter(ws => ws.id !== workspaceId);
+                if (remainingWorkspaces.length > 0) {
+                    setActiveWorkspaceId(remainingWorkspaces[0].id);
+                } else {
+                    setActiveWorkspaceId(null);
+                }
             }
         } catch (error) {
             toast.error("Failed to delete workspace");
@@ -151,13 +154,15 @@ export const WorkspaceSwitcher = () => {
                                         {workspace.userId === user?.id && !workspace.isPersonal && (
                                             <>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem
-                                                    onClick={() => onDeleteWorkspace(workspace.id)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                >
-                                                    <Trash className="h-4 w-4 mr-2" />
-                                                    Delete
-                                                </DropdownMenuItem>
+                                                <ConfirmModal onConfirm={() => onDeleteWorkspace(workspace.id)}>
+                                                    <DropdownMenuItem
+                                                        onSelect={(e) => e.preventDefault()}
+                                                        className="text-red-600 hover:text-red-700 hover:bg-neutral-100"
+                                                    >
+                                                        <Trash className="h-4 w-4 mr-2" />
+                                                        Delete
+                                                    </DropdownMenuItem>
+                                                </ConfirmModal>
                                             </>
                                         )}
                                     </DropdownMenuContent>

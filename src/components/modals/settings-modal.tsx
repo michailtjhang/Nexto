@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UserPlus, User as UserIcon, ShieldCheck, Trash } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmModal } from "@/components/modals/confirm-modal";
 
 export const SettingsModal = () => {
     const { user } = useUser();
@@ -38,9 +39,6 @@ export const SettingsModal = () => {
     const currentUserMember = members.find(m => m.userId === user?.id);
 
     const onRemoveMember = async (memberId: string) => {
-        const confirm = window.confirm("Are you sure you want to remove this member?");
-        if (!confirm) return;
-
         try {
             setIsLoading(true);
             const res = await fetch(`/api/workspaces/members?memberId=${memberId}`, {
@@ -162,15 +160,16 @@ export const SettingsModal = () => {
                                     </div>
                                     {/* Only owner can remove others, OR user can remove themselves (except if they are the owner) */}
                                     {((isOwner && member.role !== "owner") || (!isOwner && member.userId === user?.id)) && (
-                                        <Button
-                                            onClick={() => onRemoveMember(member.id)}
-                                            disabled={isLoading}
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-neutral-100 transition"
-                                        >
-                                            <Trash className="h-4 w-4" />
-                                        </Button>
+                                        <ConfirmModal onConfirm={() => onRemoveMember(member.id)}>
+                                            <Button
+                                                disabled={isLoading}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-neutral-100 transition"
+                                            >
+                                                <Trash className="h-4 w-4" />
+                                            </Button>
+                                        </ConfirmModal>
                                     )}
                                 </div>
                             </div>
