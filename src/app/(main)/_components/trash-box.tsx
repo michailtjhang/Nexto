@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { ConfirmModal } from "@/components/modals/confirm-modal";
 import { Document } from "@/lib/db/schema";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
+import { Button } from "@/components/ui/button";
 
 export const TrashBox = () => {
     const router = useRouter();
@@ -16,25 +18,22 @@ export const TrashBox = () => {
     const [search, setSearch] = useState("");
     const [documents, setDocuments] = useState<Document[] | undefined>(undefined);
 
+    const { activeWorkspaceId, triggerRefresh } = useWorkspaceStore();
+
     const fetchDocuments = async () => {
-        const res = await fetch("/api/documents?archived=true");
+        if (!activeWorkspaceId) return;
+        const res = await fetch(`/api/documents?archived=true&workspaceId=${activeWorkspaceId}`);
         if (!res.ok) {
             setDocuments([]);
             return;
         }
-        // The instruction asks to add 'if (!res.ok) return;' before 'res.json()'.
-        // In this specific file, the `res.json()` call is already guarded by the
-        // `if (!res.ok)` block above, meaning `res.json()` is only reached if `res.ok` is true.
-        // Adding another `if (!res.ok) return;` here would be redundant.
-        // However, to faithfully follow the instruction, it would look like this:
-        // if (!res.ok) return;
         const data = await res.json();
         setDocuments(data);
     };
 
     useEffect(() => {
         fetchDocuments();
-    }, []);
+    }, [activeWorkspaceId]);
 
     const onRestore = (
         event: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -52,10 +51,14 @@ export const TrashBox = () => {
         });
     };
 
-    const onRemove = (id: string) => {
+    const onRemove = (id: string | undefined) => {
+        if (!id) return;
         const promise = fetch(`/api/documents/${id}`, {
             method: "DELETE",
-        }).then(() => fetchDocuments());
+        }).then(() => {
+            fetchDocuments();
+            triggerRefresh(); // Sync sidebar
+        });
 
         toast.promise(promise, {
             loading: "Deleting note...",
@@ -66,6 +69,24 @@ export const TrashBox = () => {
         if (params?.documentId === id) {
             router.push("/documents");
         }
+    };
+
+    const onEmptyTrash = () => {
+        if (!activeWorkspaceId) return;
+
+        const promise = fetch("/api/documents/trash/empty", {
+            method: "POST",
+            body: JSON.stringify({ workspaceId: activeWorkspaceId })
+        }).then(() => {
+            fetchDocuments();
+            triggerRefresh();
+        });
+
+        toast.promise(promise, {
+            loading: "Emptying trash...",
+            success: "Trash emptied!",
+            error: "Failed to empty trash.",
+        });
     };
 
     const filteredDocuments = documents?.filter((doc) => {
@@ -91,6 +112,20 @@ export const TrashBox = () => {
                     placeholder="Filter by page title..."
                 />
             </div>
+            {filteredDocuments && filteredDocuments.length > 0 && (
+                <div className="px-2 pb-2">
+                    <ConfirmModal onConfirm={onEmptyTrash}>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-xs text-muted-foreground hover:text-destructive"
+                        >
+                            <Trash className="h-3 w-3 mr-2" />
+                            Empty Trash
+                        </Button>
+                    </ConfirmModal>
+                </div>
+            )}
             <div className="mt-2 px-1 pb-1">
                 <p className="hidden last:block text-xs text-center text-muted-foreground pb-2">
                     No documents found.

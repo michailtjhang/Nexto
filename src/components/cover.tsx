@@ -22,6 +22,18 @@ export const Cover = ({
     const coverImage = useCoverImage();
 
     const onRemove = async () => {
+        if (url) {
+            // Extract fileKey from URL (assuming https://utfs.io/f/fileKey)
+            const fileKey = url.split("/").pop();
+
+            if (fileKey) {
+                await fetch("/api/uploadthing/delete", {
+                    method: "POST",
+                    body: JSON.stringify({ fileKey }),
+                });
+            }
+        }
+
         await fetch(`/api/documents/${params?.documentId}`, {
             method: "PATCH",
             body: JSON.stringify({ coverImage: null }),

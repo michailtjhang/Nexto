@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import {
     deleteWorkspace,
+    getAllDocumentsInWorkspace,
 } from "@/lib/db/queries";
+import { UTApi } from "uploadthing/server";
 
 export async function DELETE(
     req: NextRequest,
@@ -18,6 +20,16 @@ export async function DELETE(
 
         if (!workspaceId) {
             return NextResponse.json({ error: "Workspace ID required" }, { status: 400 });
+        }
+
+        const documents = await getAllDocumentsInWorkspace(workspaceId);
+        const coverImageKeys = documents
+            .map(doc => doc.coverImage?.split("/").pop())
+            .filter((key): key is string => !!key);
+
+        if (coverImageKeys.length > 0) {
+            const utapi = new UTApi();
+            await utapi.deleteFiles(coverImageKeys);
         }
 
         await deleteWorkspace(workspaceId, userId);

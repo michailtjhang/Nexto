@@ -34,6 +34,17 @@ export const CoverImageModal = () => {
             const res = await startUpload([file]);
 
             if (res && res[0]) {
+                // Cleanup old image if it exists
+                if (coverImage.url) {
+                    const oldFileKey = coverImage.url.split("/").pop();
+                    if (oldFileKey) {
+                        await fetch("/api/uploadthing/delete", {
+                            method: "POST",
+                            body: JSON.stringify({ fileKey: oldFileKey }),
+                        });
+                    }
+                }
+
                 await fetch(`/api/documents/${params?.documentId}`, {
                     method: "PATCH",
                     body: JSON.stringify({

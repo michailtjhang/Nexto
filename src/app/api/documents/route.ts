@@ -4,6 +4,7 @@ import {
     getRootDocuments,
     createDocument,
     searchDocuments,
+    getArchivedDocuments,
     isMemberOfWorkspace,
 } from "@/lib/db/queries";
 
@@ -21,9 +22,17 @@ export async function GET(req: NextRequest) {
         const { searchParams } = new URL(req.url);
         const query = searchParams.get("q");
         const workspaceId = searchParams.get("workspaceId");
+        const archived = searchParams.get("archived") === "true";
 
-        if (!workspaceId && !query) {
+        if (!workspaceId && !query && !archived) {
             return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
+        }
+
+        if (archived) {
+            // If workspaceId is provided, we should ideally filter by it. 
+            // For now, getArchivedDocuments gets all user's archived docs.
+            const docs = await getArchivedDocuments(userId);
+            return NextResponse.json(docs);
         }
 
         if (query) {

@@ -6,6 +6,7 @@ import {
     deleteDocument,
     isMemberOfWorkspace,
 } from "@/lib/db/queries";
+import { UTApi } from "uploadthing/server";
 
 export async function GET(
     req: NextRequest,
@@ -113,6 +114,14 @@ export async function DELETE(
         const isMember = await isMemberOfWorkspace(doc.workspaceId!, userId, email);
         if (doc.userId !== userId && !isMember) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        if (doc.coverImage) {
+            const fileKey = doc.coverImage.split("/").pop();
+            if (fileKey) {
+                const utapi = new UTApi();
+                await utapi.deleteFiles(fileKey);
+            }
         }
 
         const result = await deleteDocument(documentId);

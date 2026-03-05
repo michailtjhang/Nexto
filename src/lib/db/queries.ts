@@ -2,6 +2,14 @@ import { db } from "./index";
 import { documents, workspaces, workspaceMembers, type NewDocument, type Workspace, type WorkspaceMember } from "./schema";
 import { eq, and, isNull, isNotNull, desc, or } from "drizzle-orm";
 
+// Get all documents in a workspace (including archived)
+export async function getAllDocumentsInWorkspace(workspaceId: string) {
+    return db
+        .select()
+        .from(documents)
+        .where(eq(documents.workspaceId, workspaceId));
+}
+
 // Get all non-archived documents for a workspace (top level)
 export async function getRootDocuments(workspaceId: string) {
     return db
@@ -50,6 +58,27 @@ export async function getArchivedDocuments(userId: string) {
             and(eq(documents.userId, userId), eq(documents.isArchived, true))
         )
         .orderBy(desc(documents.updatedAt));
+}
+
+// Get archived documents in a workspace
+export async function getArchivedDocumentsInWorkspace(workspaceId: string) {
+    return db
+        .select()
+        .from(documents)
+        .where(
+            and(eq(documents.workspaceId, workspaceId), eq(documents.isArchived, true))
+        )
+        .orderBy(desc(documents.updatedAt));
+}
+
+// Permanently delete all archived documents in a workspace
+export async function emptyTrashInWorkspace(workspaceId: string) {
+    return db
+        .delete(documents)
+        .where(
+            and(eq(documents.workspaceId, workspaceId), eq(documents.isArchived, true))
+        )
+        .returning();
 }
 
 // Search documents by title within a workspace
