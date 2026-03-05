@@ -179,6 +179,26 @@ export async function removeWorkspaceMember(memberId: string) {
         .returning();
 }
 
+export async function isMemberOfWorkspace(workspaceId: string, userId: string, email?: string) {
+    const conditions = [eq(workspaceMembers.workspaceId, workspaceId)];
+
+    if (email) {
+        conditions.push(or(
+            eq(workspaceMembers.userId, userId),
+            eq(workspaceMembers.email, email)
+        )!);
+    } else {
+        conditions.push(eq(workspaceMembers.userId, userId));
+    }
+
+    const member = await db
+        .select()
+        .from(workspaceMembers)
+        .where(and(...conditions));
+
+    return member.length > 0;
+}
+
 export async function deleteWorkspace(workspaceId: string, userId: string) {
     // Only owner can delete
     return db
@@ -190,42 +210,41 @@ export async function deleteWorkspace(workspaceId: string, userId: string) {
         .returning();
 }
 
-// Update document
+// Update document (Allowed for workspace members)
 export async function updateDocument(
     id: string,
-    userId: string,
     data: Partial<NewDocument>
 ) {
     const result = await db
         .update(documents)
         .set({ ...data, updatedAt: new Date() })
-        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .where(eq(documents.id, id))
         .returning();
     return result[0];
 }
 
-// Archive document (move to trash) — also archives children recursively via API
-export async function archiveDocument(id: string, userId: string) {
+// Archive document (move to trash)
+export async function archiveDocument(id: string) {
     return db
         .update(documents)
         .set({ isArchived: true, updatedAt: new Date() })
-        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .where(eq(documents.id, id))
         .returning();
 }
 
 // Restore document from trash
-export async function restoreDocument(id: string, userId: string) {
+export async function restoreDocument(id: string) {
     return db
         .update(documents)
         .set({ isArchived: false, updatedAt: new Date() })
-        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .where(eq(documents.id, id))
         .returning();
 }
 
 // Permanently delete document
-export async function deleteDocument(id: string, userId: string) {
+export async function deleteDocument(id: string) {
     return db
         .delete(documents)
-        .where(and(eq(documents.id, id), eq(documents.userId, userId)))
+        .where(eq(documents.id, id))
         .returning();
 }

@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import {
     getRootDocuments,
     createDocument,
     searchDocuments,
+    isMemberOfWorkspace,
 } from "@/lib/db/queries";
 
 export async function GET(req: NextRequest) {
     try {
         const { userId } = await auth();
-        if (!userId) {
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         const { searchParams } = new URL(req.url);
         const query = searchParams.get("q");
@@ -26,6 +31,12 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(docs);
         }
 
+        // Verify membership for listing
+        const isMember = await isMemberOfWorkspace(workspaceId!, userId, email);
+        if (!isMember) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
         const docs = await getRootDocuments(workspaceId!);
         return NextResponse.json(docs);
     } catch (error) {
@@ -37,9 +48,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const { userId } = await auth();
-        if (!userId) {
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         let body;
         try {
@@ -55,6 +70,12 @@ export async function POST(req: NextRequest) {
         if (!workspaceId) {
             console.error("DEBUG: POST /api/documents - Workspace ID is missing");
             return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
+        }
+
+        // Verify membership for creation
+        const isMember = await isMemberOfWorkspace(workspaceId, userId, email);
+        if (!isMember) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
         try {

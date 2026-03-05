@@ -51,6 +51,11 @@ export const DocumentList = ({
         };
 
         fetchDocuments();
+
+        // Add polling for multi-user sync (every 10 seconds)
+        const intervalId = setInterval(fetchDocuments, 10000);
+
+        return () => clearInterval(intervalId);
     }, [parentDocumentId, params?.documentId, activeWorkspaceId, refreshCounter]);
 
     const onRedirect = (documentId: string) => {

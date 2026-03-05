@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import {
     getDocumentById,
     updateDocument,
-    archiveDocument,
-    restoreDocument,
     deleteDocument,
-    getChildDocuments,
-    getArchivedDocuments,
+    isMemberOfWorkspace,
 } from "@/lib/db/queries";
 
 export async function GET(
@@ -16,16 +13,29 @@ export async function GET(
 ) {
     try {
         const { userId } = await auth();
+        const user = await currentUser();
         const { documentId } = await params;
+
+        if (!userId || !user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         const doc = await getDocumentById(documentId);
         if (!doc) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
         }
 
-        // If not published and not owner
-        if (!doc.isPublished && doc.userId !== userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        // If not published, check if user is owner OR a member of the workspace
+        if (!doc.isPublished) {
+            if (!doc.workspaceId) {
+                return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
+            }
+            const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+            if (doc.userId !== userId && !isMember) {
+                return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            }
         }
 
         return NextResponse.json(doc);
@@ -41,17 +51,34 @@ export async function PATCH(
 ) {
     try {
         const { userId } = await auth();
-        if (!userId) {
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         const { documentId } = await params;
         const body = await req.json();
         const { workspaceId, ...values } = body;
 
-        // In a real app, you'd verify the user is a member of workspaceId
-        const doc = await updateDocument(documentId, userId, values);
-        return NextResponse.json(doc);
+        const doc = await getDocumentById(documentId);
+        if (!doc) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
+        // Verify membership
+        if (!doc.workspaceId) {
+            return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
+        }
+        const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+        if (doc.userId !== userId && !isMember) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const updatedDoc = await updateDocument(documentId, values);
+        return NextResponse.json(updatedDoc);
     } catch (error) {
         console.error("[DOCUMENT_PATCH]", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
@@ -64,12 +91,31 @@ export async function DELETE(
 ) {
     try {
         const { userId } = await auth();
-        if (!userId) {
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
+
         const { documentId } = await params;
-        const result = await deleteDocument(documentId, userId);
+        const doc = await getDocumentById(documentId);
+
+        if (!doc) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
+        // Verify membership
+        if (!doc.workspaceId) {
+            return NextResponse.json({ error: "Invalid document state (no workspace)" }, { status: 400 });
+        }
+        const isMember = await isMemberOfWorkspace(doc.workspaceId, userId, email);
+        if (doc.userId !== userId && !isMember) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const result = await deleteDocument(documentId);
 
         return NextResponse.json(result);
     } catch (error) {
