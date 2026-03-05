@@ -84,6 +84,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Only owners can invite members" }, { status: 403 });
         }
 
+        // Block invitations to personal workspaces
+        const workspace = await db
+            .select()
+            .from(workspaces)
+            .where(eq(workspaces.id, workspaceId))
+            .then(res => res[0]);
+
+        if (workspace?.isPersonal) {
+            return NextResponse.json({ error: "Cannot invite members to personal workspace" }, { status: 400 });
+        }
+
         // 1. Add to database
         const member = await addWorkspaceMember(workspaceId, email);
 

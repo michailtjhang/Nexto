@@ -6,6 +6,7 @@ export const workspaces = pgTable("workspaces", {
         .$defaultFn(() => crypto.randomUUID()),
     name: text("name").notNull(),
     userId: text("user_id").notNull(), // Owner
+    isPersonal: boolean("is_personal").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

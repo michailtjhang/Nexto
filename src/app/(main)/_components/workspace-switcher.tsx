@@ -122,6 +122,11 @@ export const WorkspaceSwitcher = () => {
                                 </div>
                                 <span className="text-sm truncate">
                                     {workspace.name}
+                                    {workspace.isPersonal && (
+                                        <span className="ml-2 text-[10px] text-muted-foreground bg-secondary px-1 py-0.5 rounded uppercase font-bold">
+                                            Personal
+                                        </span>
+                                    )}
                                 </span>
                                 {activeWorkspaceId === workspace.id && (
                                     <Check className="h-4 w-4 ml-auto text-indigo-600 dark:text-indigo-400" />
@@ -143,7 +148,7 @@ export const WorkspaceSwitcher = () => {
                                             <Settings className="h-4 w-4 mr-2" />
                                             Settings
                                         </DropdownMenuItem>
-                                        {workspace.userId === user?.id && (
+                                        {workspace.userId === user?.id && !workspace.isPersonal && (
                                             <>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem

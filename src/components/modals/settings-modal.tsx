@@ -115,14 +115,16 @@ export const SettingsModal = () => {
                     <div className="flex flex-col gap-y-1">
                         <Label>Team Members</Label>
                         <span className="text-[0.8rem] text-muted-foreground">
-                            {isOwner
-                                ? "Invite people to this workspace by email"
-                                : "View members of this workspace"
+                            {activeWorkspace?.isPersonal
+                                ? "This is a personal workspace. Only you can access it."
+                                : isOwner
+                                    ? "Invite people to this workspace by email"
+                                    : "View members of this workspace"
                             }
                         </span>
                     </div>
-                    {/* Only show invite input if owner */}
-                    {isOwner && (
+                    {/* Only show invite input if owner and NOT a personal workspace */}
+                    {isOwner && !activeWorkspace?.isPersonal && (
                         <div className="flex gap-x-2">
                             <Input
                                 placeholder="Email address"

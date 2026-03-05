@@ -95,11 +95,11 @@ export async function createDocument(data: {
 
 // WORKSPACE QUERIES
 
-export async function createWorkspace(name: string, userId: string, email: string) {
+export async function createWorkspace(name: string, userId: string, email: string, isPersonal = false) {
     try {
         const ws = await db
             .insert(workspaces)
-            .values({ name, userId })
+            .values({ name, userId, isPersonal })
             .returning();
 
         if (!ws || ws.length === 0) {
@@ -220,14 +220,26 @@ export async function isMemberOfWorkspace(workspaceId: string, userId: string, e
 }
 
 export async function deleteWorkspace(workspaceId: string, userId: string) {
-    // Only owner can delete
+    // Only owner can delete AND it must not be a personal workspace
     return db
         .delete(workspaces)
         .where(and(
             eq(workspaces.id, workspaceId),
-            eq(workspaces.userId, userId)
+            eq(workspaces.userId, userId),
+            eq(workspaces.isPersonal, false)
         ))
         .returning();
+}
+
+export async function getPersonalWorkspace(userId: string) {
+    const result = await db
+        .select()
+        .from(workspaces)
+        .where(and(
+            eq(workspaces.userId, userId),
+            eq(workspaces.isPersonal, true)
+        ));
+    return result[0] ?? null;
 }
 
 // Update document (Allowed for workspace members)

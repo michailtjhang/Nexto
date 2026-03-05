@@ -3,8 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import {
     getWorkspacesByUserId,
     createWorkspace,
-    addWorkspaceMember,
-    getWorkspaceMembers,
+    getPersonalWorkspace,
 } from "@/lib/db/queries";
 
 export async function GET(req: NextRequest) {
@@ -18,12 +17,14 @@ export async function GET(req: NextRequest) {
 
         const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
-        const workspaces = await getWorkspacesByUserId(userId, email);
+        let workspaces = await getWorkspacesByUserId(userId, email);
 
-        // If user has no workspaces, create a default one
-        if (workspaces.length === 0) {
-            const defaultWs = await createWorkspace("My Workspace", userId, email!);
-            return NextResponse.json([defaultWs]);
+        // Ensure user has a personal workspace
+        let personalWs = await getPersonalWorkspace(userId);
+        if (!personalWs) {
+            personalWs = await createWorkspace("My Workspace", userId, email!, true);
+            // Refresh list to include newly created personal workspace
+            workspaces = await getWorkspacesByUserId(userId, email);
         }
 
         return NextResponse.json(workspaces);
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { name } = body;
 
-        const workspace = await createWorkspace(name || "Untitled Workspace", userId, email!);
+        const workspace = await createWorkspace(name || "Untitled Workspace", userId, email!, false);
 
         return NextResponse.json(workspace);
     } catch (error) {
