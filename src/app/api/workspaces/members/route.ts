@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
                     .then(res => res[0]);
 
                 if (workspace) {
-                    await resend.emails.send({
+                    const data = await resend.emails.send({
                         from: 'Nexto <onboarding@resend.dev>',
                         to: email,
                         subject: `Undangan Join Workspace: ${workspace.name}`,
@@ -69,10 +69,15 @@ export async function POST(req: NextRequest) {
                             loginUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://nexto-ten.vercel.app'}/documents`
                         }) as React.ReactElement,
                     });
-                    console.log(`DEBUG: Invitation email sent to ${email}`);
+
+                    if (data.error) {
+                        console.error("DEBUG: Resend API Error:", data.error);
+                    } else {
+                        console.log(`DEBUG: Invitation email sent successfully, ID: ${data.data?.id}`);
+                    }
                 }
             } catch (emailError) {
-                console.error("DEBUG: Failed to send email via Resend:", emailError);
+                console.error("DEBUG: Exception in Resend logic:", emailError);
             }
         }
 
