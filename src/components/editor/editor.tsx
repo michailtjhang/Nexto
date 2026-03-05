@@ -17,7 +17,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 
 interface EditorProps {
     onChange: (value: string) => void;
-    initialContent?: string;
+    initialContent?: any;
     editable?: boolean;
 }
 
@@ -41,7 +41,9 @@ const Editor = ({
 
     const editor: BlockNoteEditor = useCreateBlockNote({
         initialContent: initialContent
-            ? (JSON.parse(initialContent) as PartialBlock[])
+            ? (typeof initialContent === "string"
+                ? JSON.parse(initialContent)
+                : initialContent) as PartialBlock[]
             : undefined,
         uploadFile: handleUpload,
     });

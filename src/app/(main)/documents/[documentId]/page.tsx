@@ -40,6 +40,9 @@ const DocumentIdPage = ({
     const onChange = (content: string) => {
         fetch(`/api/documents/${documentId}`, {
             method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
             body: JSON.stringify({ content }),
         });
     };

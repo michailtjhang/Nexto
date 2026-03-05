@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import {
     getWorkspacesByUserId,
     createWorkspace,
@@ -9,16 +9,14 @@ import {
 
 export async function GET(req: NextRequest) {
     try {
-        const { userId, sessionClaims } = await auth();
-        if (!userId) {
+        const { userId } = await auth();
+        const user = await currentUser();
+
+        if (!userId || !user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get email from session claims if available, otherwise we might need a clerkClient call
-        // Assuming clerk is configured to include email in session claims, or we just use userId.
-        // For better reliability, let's use the clerk backend client if needed, 
-        // but often email is in sessionClaims.primary_email
-        const email = (sessionClaims as any)?.email;
+        const email = user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress;
 
         const workspaces = await getWorkspacesByUserId(userId, email);
 

@@ -41,25 +41,38 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await req.json();
+        let body;
+        try {
+            body = await req.json();
+        } catch (e) {
+            console.error("DEBUG: Failed to parse request JSON", e);
+            return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+        }
+
         console.log("DEBUG: POST /api/documents body:", JSON.stringify(body, null, 2));
         const { title, parentId, workspaceId, emoji, content, coverImage } = body;
 
         if (!workspaceId) {
+            console.error("DEBUG: POST /api/documents - Workspace ID is missing");
             return NextResponse.json({ error: "Workspace ID is required" }, { status: 400 });
         }
 
-        const doc = await createDocument({
-            title: title || "Untitled",
-            userId,
-            workspaceId,
-            parentId,
-            emoji,
-            content,
-            coverImage,
-        });
+        try {
+            const doc = await createDocument({
+                title: title || "Untitled",
+                userId,
+                workspaceId,
+                parentId,
+                emoji,
+                content,
+                coverImage,
+            });
 
-        return NextResponse.json(doc);
+            return NextResponse.json(doc);
+        } catch (dbError) {
+            console.error("DEBUG: Database error in createDocument:", dbError);
+            return NextResponse.json({ error: "Database failure", details: dbError instanceof Error ? dbError.message : String(dbError) }, { status: 500 });
+        }
     } catch (error) {
         console.error("[DOCUMENTS_POST]", error);
         return NextResponse.json({ error: "Internal Error" }, { status: 500 });
