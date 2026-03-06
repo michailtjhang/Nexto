@@ -3,9 +3,7 @@
 import { useTheme } from "next-themes";
 import {
     BlockNoteEditor,
-    PartialBlock,
-    BlockNoteSchema,
-    defaultBlockSpecs,
+    PartialBlock
 } from "@blocknote/core";
 import "@blocknote/core/fonts/inter.css";
 import {
@@ -17,14 +15,6 @@ import {
 import "@blocknote/mantine/style.css";
 import { toast } from "sonner";
 import { useUploadThing } from "@/lib/uploadthing";
-import { DatabaseBlock } from "./database-block";
-
-const schema = BlockNoteSchema.create({
-    blockSpecs: {
-        ...defaultBlockSpecs,
-        databaseBlock: DatabaseBlock as any,
-    },
-});
 
 interface EditorProps {
     onChange: (value: string) => void;
@@ -54,12 +44,11 @@ const Editor = ({
         throw new Error("Failed to upload file");
     };
 
-    const editor = useCreateBlockNote({
-        schema,
+    const editor: BlockNoteEditor = useCreateBlockNote({
         initialContent: initialContent
             ? (typeof initialContent === "string"
                 ? JSON.parse(initialContent)
-                : initialContent) as PartialBlock<typeof schema.blockSchema>[]
+                : initialContent) as PartialBlock[]
             : undefined,
         uploadFile: handleUpload,
     });

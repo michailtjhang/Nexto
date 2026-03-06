@@ -3,12 +3,11 @@
 import { useEffect, useMemo, useState, use } from "react";
 import dynamic from "next/dynamic";
 import { useDocumentStore } from "@/hooks/use-document-store";
-import { Document } from "@/lib/db/schema";
+import { Document, DatabaseColumn, DatabaseRow } from "@/lib/db/schema";
 import { Toolbar } from "@/components/toolbar";
 import { Cover } from "@/components/cover";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMediaQuery, useDebounceCallback } from "usehooks-ts";
-import { toast } from "sonner";
+import { useDebounceCallback } from "usehooks-ts";
 
 interface DocumentIdPageProps {
     params: Promise<{
@@ -17,12 +16,17 @@ interface DocumentIdPageProps {
 }
 
 const Editor = dynamic(() => import("@/components/editor/editor"), { ssr: false });
+const DatabaseTable = dynamic(
+    () => import("@/components/editor/database-table").then(m => ({ default: m.DatabaseTable })),
+    { ssr: false }
+);
 
 const DocumentIdPage = ({
     params
 }: DocumentIdPageProps) => {
     const { documentId } = use(params);
     const [document, setDocument] = useState<Document | null>(null);
+    const [dbData, setDbData] = useState<{ id: string; columns: DatabaseColumn[]; rows: DatabaseRow[] } | null>(null);
 
     const { setId, setTitle } = useDocumentStore();
 
@@ -38,6 +42,49 @@ const DocumentIdPage = ({
 
         fetchDoc();
     }, [documentId, setId, setTitle]);
+
+    // Detect if this is a database document and fetch database data
+    const isDatabasePage = useMemo(() => {
+        if (!document?.content) return false;
+        try {
+            const parsed = typeof document.content === "string"
+                ? JSON.parse(document.content)
+                : document.content;
+            return Array.isArray(parsed) && parsed.some((b: any) => b.type === "databaseBlock");
+        } catch {
+            return false;
+        }
+    }, [document?.content]);
+
+    const databaseId = useMemo(() => {
+        if (!document?.content) return null;
+        try {
+            const parsed = typeof document.content === "string"
+                ? JSON.parse(document.content)
+                : document.content;
+            const dbBlock = Array.isArray(parsed) ? parsed.find((b: any) => b.type === "databaseBlock") : null;
+            return dbBlock?.props?.databaseId ?? null;
+        } catch {
+            return null;
+        }
+    }, [document?.content]);
+
+    useEffect(() => {
+        if (!databaseId) return;
+
+        const fetchDb = async () => {
+            const res = await fetch(`/api/databases/${databaseId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            setDbData({
+                id: data.id,
+                columns: (data.columns as DatabaseColumn[]) ?? [],
+                rows: (data.rows as DatabaseRow[]) ?? [],
+            });
+        };
+
+        fetchDb();
+    }, [databaseId]);
 
     const debouncedUpdate = useDebounceCallback((content: string) => {
         fetch(`/api/documents/${documentId}`, {
@@ -74,10 +121,20 @@ const DocumentIdPage = ({
             <Cover url={document.coverImage || undefined} />
             <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
                 <Toolbar initialData={document} />
-                <Editor
-                    onChange={onChange}
-                    initialContent={document.content as string}
-                />
+                {isDatabasePage && dbData ? (
+                    <div className="px-4 sm:px-6">
+                        <DatabaseTable
+                            databaseId={dbData.id}
+                            initialColumns={dbData.columns}
+                            initialRows={dbData.rows}
+                        />
+                    </div>
+                ) : (
+                    <Editor
+                        onChange={onChange}
+                        initialContent={document.content as string}
+                    />
+                )}
             </div>
         </div>
     );
