@@ -7,6 +7,7 @@ import {
     isMemberOfWorkspace,
 } from "@/lib/db/queries";
 import { UTApi } from "uploadthing/server";
+import { extractMediaUrls, getFileKeyFromUrl } from "@/lib/uploadthing-utils";
 
 export async function GET(
     req: NextRequest,
@@ -78,6 +79,26 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Cleanup removed media if content is being updated
+        if (values.content) {
+            const oldUrls = extractMediaUrls(doc.content);
+            const newUrls = extractMediaUrls(values.content);
+
+            const removedUrls = oldUrls.filter(url => !newUrls.includes(url));
+            const removedKeys = removedUrls
+                .map(url => getFileKeyFromUrl(url))
+                .filter((key): key is string => !!key);
+
+            if (removedKeys.length > 0) {
+                try {
+                    const utapi = new UTApi();
+                    await utapi.deleteFiles(removedKeys);
+                } catch (error) {
+                    console.error("[CONTENT_MEDIA_CLEANUP_PATCH]", error);
+                }
+            }
+        }
+
         const updatedDoc = await updateDocument(documentId, values);
         return NextResponse.json(updatedDoc);
     } catch (error) {
@@ -116,11 +137,26 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Cleanup cover image and all content media
+        const allKeys: string[] = [];
+
         if (doc.coverImage) {
-            const fileKey = doc.coverImage.split("/").pop();
-            if (fileKey) {
+            const key = getFileKeyFromUrl(doc.coverImage);
+            if (key) allKeys.push(key);
+        }
+
+        const contentUrls = extractMediaUrls(doc.content);
+        contentUrls.forEach(url => {
+            const key = getFileKeyFromUrl(url);
+            if (key) allKeys.push(key);
+        });
+
+        if (allKeys.length > 0) {
+            try {
                 const utapi = new UTApi();
-                await utapi.deleteFiles(fileKey);
+                await utapi.deleteFiles(allKeys);
+            } catch (error) {
+                console.error("[DOCUMENT_MEDIA_CLEANUP_DELETE]", error);
             }
         }
 

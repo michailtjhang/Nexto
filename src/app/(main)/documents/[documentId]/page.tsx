@@ -7,6 +7,8 @@ import { Document } from "@/lib/db/schema";
 import { Toolbar } from "@/components/toolbar";
 import { Cover } from "@/components/cover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMediaQuery, useDebounceCallback } from "usehooks-ts";
+import { toast } from "sonner";
 
 interface DocumentIdPageProps {
     params: Promise<{
@@ -37,7 +39,7 @@ const DocumentIdPage = ({
         fetchDoc();
     }, [documentId, setId, setTitle]);
 
-    const onChange = (content: string) => {
+    const debouncedUpdate = useDebounceCallback((content: string) => {
         fetch(`/api/documents/${documentId}`, {
             method: "PATCH",
             headers: {
@@ -45,6 +47,10 @@ const DocumentIdPage = ({
             },
             body: JSON.stringify({ content }),
         });
+    }, 1000);
+
+    const onChange = (content: string) => {
+        debouncedUpdate(content);
     };
 
     if (document === null) {
