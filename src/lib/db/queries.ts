@@ -1,5 +1,5 @@
 import { db } from "./index";
-import { documents, workspaces, workspaceMembers, type NewDocument, type Workspace, type WorkspaceMember } from "./schema";
+import { documents, workspaces, workspaceMembers, databases, type NewDocument, type Workspace, type WorkspaceMember, type DatabaseColumn, type DatabaseRow, type NewDatabase } from "./schema";
 import { eq, and, isNull, isNotNull, desc, or } from "drizzle-orm";
 
 // Get all documents in a workspace (including archived)
@@ -307,5 +307,51 @@ export async function deleteDocument(id: string) {
     return db
         .delete(documents)
         .where(eq(documents.id, id))
+        .returning();
+}
+
+// =================== Database Queries ===================
+
+export async function createDatabase(data: NewDatabase) {
+    const result = await db
+        .insert(databases)
+        .values(data)
+        .returning();
+    return result[0];
+}
+
+export async function getDatabaseById(id: string) {
+    const result = await db
+        .select()
+        .from(databases)
+        .where(eq(databases.id, id));
+    return result[0] ?? null;
+}
+
+export async function getDatabaseByDocumentId(documentId: string) {
+    const result = await db
+        .select()
+        .from(databases)
+        .where(eq(databases.documentId, documentId));
+    return result[0] ?? null;
+}
+
+export async function updateDatabase(id: string, data: Partial<{
+    title: string;
+    columns: DatabaseColumn[];
+    rows: DatabaseRow[];
+}>) {
+    const result = await db
+        .update(databases)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(databases.id, id))
+        .returning();
+    return result[0];
+}
+
+export async function deleteDatabaseByDocumentId(documentId: string) {
+    return db
+        .delete(databases)
+        .where(eq(databases.documentId, documentId))
         .returning();
 }

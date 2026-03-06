@@ -41,7 +41,34 @@ export const documents = pgTable("documents", {
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const databases = pgTable("databases", {
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    documentId: text("document_id").references(() => documents.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id").references(() => workspaces.id, { onDelete: "cascade" }),
+    title: text("title").notNull().default("Untitled Database"),
+    columns: jsonb("columns").notNull().default([]),
+    rows: jsonb("rows").notNull().default([]),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
+export type Database = typeof databases.$inferSelect;
+export type NewDatabase = typeof databases.$inferInsert;
+
+export type DatabaseColumn = {
+    id: string;
+    name: string;
+    type: "text" | "select" | "date" | "number";
+    options?: string[]; // For select type
+};
+
+export type DatabaseRow = {
+    id: string;
+    [columnId: string]: string;
+};

@@ -3,17 +3,13 @@
 import {
     ChevronsLeft,
     MenuIcon,
-    Plus,
-    PlusCircle,
     Search,
     Settings,
-    Trash,
     LogOut
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
-import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { UserItem } from "./user-item";
@@ -23,10 +19,9 @@ import { Item } from "./item";
 import { DocumentList } from "./document-list";
 import { useSearch } from "@/hooks/use-search";
 import { useSettings } from "@/hooks/use-settings";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TrashBox } from "./trash-box";
 import { Navbar } from "./navbar";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
+import { AddNewMenu } from "./add-new-menu";
 
 export const Navigation = () => {
     const router = useRouter();
@@ -133,28 +128,6 @@ export const Navigation = () => {
         }
     };
 
-    const handleCreate = () => {
-        if (!activeWorkspaceId) {
-            toast.error("No active workspace found.");
-            return;
-        }
-
-        const promise = fetch("/api/documents", {
-            method: "POST",
-            body: JSON.stringify({
-                title: "Untitled",
-                workspaceId: activeWorkspaceId
-            }),
-        })
-            .then((res) => res.json())
-            .then((doc) => router.push(`/documents/${doc.id}`));
-
-        toast.promise(promise, {
-            loading: "Creating a new note...",
-            success: "New note created!",
-            error: "Failed to create a new note.",
-        });
-    };
 
     return (
         <>
@@ -191,30 +164,10 @@ export const Navigation = () => {
                         icon={Settings}
                         onClick={settings.onOpen}
                     />
-                    <Item
-                        onClick={handleCreate}
-                        label="New page"
-                        icon={PlusCircle}
-                    />
+                    <AddNewMenu />
                 </div>
                 <div className="mt-4">
                     <DocumentList />
-                    <Item
-                        onClick={handleCreate}
-                        icon={Plus}
-                        label="Add a page"
-                    />
-                    <Popover>
-                        <PopoverTrigger className="w-full mt-4">
-                            <Item label="Trash" icon={Trash} />
-                        </PopoverTrigger>
-                        <PopoverContent
-                            className="p-0 w-72"
-                            side={isMobile ? "bottom" : "right"}
-                        >
-                            <TrashBox />
-                        </PopoverContent>
-                    </Popover>
                 </div>
                 <div className="mt-auto px-3 py-2">
                     <SignOutButton>
