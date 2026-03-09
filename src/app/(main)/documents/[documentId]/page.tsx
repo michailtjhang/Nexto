@@ -121,14 +121,25 @@ const DocumentIdPage = ({
             <Cover url={document.coverImage || undefined} />
             <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
                 <Toolbar initialData={document} />
-                {isDatabasePage && dbData ? (
-                    <div className="px-4 sm:px-6">
-                        <DatabaseTable
-                            databaseId={dbData.id}
-                            initialColumns={dbData.columns}
-                            initialRows={dbData.rows}
-                        />
-                    </div>
+                {isDatabasePage ? (
+                    dbData ? (
+                        <div className="px-4 sm:px-6">
+                            <DatabaseTable
+                                databaseId={dbData.id}
+                                initialColumns={dbData.columns}
+                                initialRows={dbData.rows}
+                            />
+                        </div>
+                    ) : (
+                        <div className="md:max-w-3xl lg:max-w-4xl mx-auto mt-10">
+                            <div className="space-y-4 pl-8 pt-4">
+                                <Skeleton className="h-14 w-[50%]" />
+                                <Skeleton className="h-4 w-[80%]" />
+                                <Skeleton className="h-4 w-[40%]" />
+                                <Skeleton className="h-4 w-[60%]" />
+                            </div>
+                        </div>
+                    )
                 ) : (
                     <Editor
                         onChange={onChange}

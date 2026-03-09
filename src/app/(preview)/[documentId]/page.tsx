@@ -31,6 +31,18 @@ const PreviewPage = ({
         fetchDoc();
     }, [documentId]);
 
+    const isDatabasePage = useMemo(() => {
+        if (!document?.content) return false;
+        try {
+            const parsed = typeof document.content === "string"
+                ? JSON.parse(document.content)
+                : document.content;
+            return Array.isArray(parsed) && parsed.some((b: any) => b.type === "databaseBlock");
+        } catch {
+            return false;
+        }
+    }, [document?.content]);
+
     if (document === null) {
         return (
             <div>
@@ -61,11 +73,17 @@ const PreviewPage = ({
             <Cover preview url={document.coverImage || undefined} />
             <div className="md:max-w-3xl lg:max-w-4xl mx-auto">
                 <Toolbar preview initialData={document} />
-                <Editor
-                    editable={false}
-                    onChange={() => { }}
-                    initialContent={document.content as string}
-                />
+                {isDatabasePage ? (
+                    <div className="p-8 text-center text-muted-foreground">
+                        Database view is not supported in preview mode.
+                    </div>
+                ) : (
+                    <Editor
+                        editable={false}
+                        onChange={() => { }}
+                        initialContent={document.content as string}
+                    />
+                )}
             </div>
         </div>
     );
