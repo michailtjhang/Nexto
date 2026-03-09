@@ -5,7 +5,8 @@ import {
     MenuIcon,
     Search,
     Settings,
-    LogOut
+    LogOut,
+    Trash
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
@@ -22,6 +23,8 @@ import { useSettings } from "@/hooks/use-settings";
 import { Navbar } from "./navbar";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 import { AddNewMenu } from "./add-new-menu";
+import { TrashBox } from "./trash-box";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Navigation = () => {
     const router = useRouter();
@@ -170,6 +173,20 @@ export const Navigation = () => {
                     <DocumentList />
                 </div>
                 <div className="mt-auto px-3 py-2">
+                    <Popover>
+                        <PopoverTrigger className="w-full">
+                            <Item
+                                label="Trash"
+                                icon={Trash}
+                            />
+                        </PopoverTrigger>
+                        <PopoverContent
+                            className="p-0 w-72"
+                            side={isMobile ? "bottom" : "right"}
+                        >
+                            <TrashBox />
+                        </PopoverContent>
+                    </Popover>
                     <SignOutButton>
                         <Item
                             label="Log out"
