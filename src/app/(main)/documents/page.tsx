@@ -9,66 +9,122 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
+const mk = (text: string, styles: object = {}) => ({ type: "text", text, styles });
+const para = (...texts: string[]) => ({
+    type: "paragraph",
+    props: { textColor: "default", backgroundColor: "default", textAlignment: "left" },
+    content: texts.map(t => mk(t)),
+    children: [],
+});
+const h = (level: 1 | 2 | 3, text: string) => ({
+    type: "heading",
+    props: { level, textColor: "default", backgroundColor: "default", textAlignment: "left" },
+    content: [mk(text)],
+    children: [],
+});
+const bullet = (text: string) => ({
+    type: "bulletListItem",
+    props: { textColor: "default", backgroundColor: "default", textAlignment: "left" },
+    content: [mk(text)],
+    children: [],
+});
+const check = (text: string, checked = false) => ({
+    type: "checkListItem",
+    props: { isChecked: checked, textColor: "default", backgroundColor: "default", textAlignment: "left" },
+    content: [mk(text)],
+    children: [],
+});
+
 const TEMPLATES = [
     {
         title: "Project Tracker",
-        emoji: "📊",
-        icon: "📊",
-        description: "Track your tasks and deadlines",
+        emoji: "🚀",
+        icon: "🚀",
+        description: "Plan tasks, track progress, and hit deadlines",
         content: [
-            {
-                type: "heading",
-                props: { textColor: "default", backgroundColor: "default", textAlignment: "left", level: 1 },
-                content: [{ type: "text", text: "Project Tracker", styles: {} }],
-                children: []
-            },
-            {
-                type: "paragraph",
-                props: { textColor: "default", backgroundColor: "default", textAlignment: "left" },
-                content: [{ type: "text", text: "Use this template to keep track of your team's progress.", styles: {} }],
-                children: []
-            }
-        ]
+            h(1, "Project Tracker"),
+            para("Use this page to plan, track, and manage your project."),
+            h(2, "Goals"),
+            bullet("Goal 1: Define the project scope"),
+            bullet("Goal 2: Complete the first milestone"),
+            bullet("Goal 3: Ship to production"),
+            h(2, "Timeline"),
+            para("Week 1 — Research & Planning"),
+            para("Week 2 — Design & Development"),
+            para("Week 3 — Testing & Review"),
+            para("Week 4 — Launch 🎉"),
+            h(2, "Tasks"),
+            check("Set up project repository"),
+            check("Write technical specs"),
+            check("Build core features"),
+            check("Write tests"),
+            check("Deploy to staging"),
+        ],
     },
     {
         title: "Reading List",
         emoji: "📚",
         icon: "📚",
-        description: "Organize your favorite books",
+        description: "Track books, articles, and podcasts",
         content: [
-            {
-                type: "heading",
-                props: { level: 1 },
-                content: [{ type: "text", text: "My Reading List", styles: {} }]
-            }
-        ]
+            h(1, "Reading List"),
+            para("Keep track of everything you want to read, watch, or listen to."),
+            h(2, "📖 To Read"),
+            check("Atomic Habits — James Clear"),
+            check("The Great Gatsby — F. Scott Fitzgerald"),
+            check("Deep Work — Cal Newport"),
+            h(2, "▶️ Now Reading"),
+            para("Write your current read here..."),
+            h(2, "✅ Finished"),
+            check("The Pragmatic Programmer", true),
+            check("Clean Code", true),
+        ],
     },
     {
         title: "Meeting Notes",
         emoji: "📝",
         icon: "📝",
-        description: "Never miss a detail in meetings",
+        description: "Never lose track of decisions and action items",
         content: [
-            {
-                type: "heading",
-                props: { level: 1 },
-                content: [{ type: "text", text: "Meeting Notes", styles: {} }]
-            }
-        ]
+            h(1, "Meeting Notes"),
+            para(`Date: ${new Date().toLocaleDateString()}`),
+            para("Attendees: "),
+            h(2, "Agenda"),
+            bullet("Topic 1"),
+            bullet("Topic 2"),
+            bullet("Topic 3"),
+            h(2, "Discussion Notes"),
+            para("Write your notes here..."),
+            h(2, "Decisions Made"),
+            bullet("Decision 1"),
+            h(2, "Action Items"),
+            check("Action item 1 (Owner)"),
+            check("Action item 2 (Owner)"),
+        ],
     },
     {
-        title: "Personal Wiki",
+        title: "Personal Home",
         emoji: "🏠",
         icon: "🏠",
-        description: "A home for your long-term goals",
+        description: "Your personal hub for goals and quick links",
         content: [
-            {
-                type: "heading",
-                props: { level: 1 },
-                content: [{ type: "text", text: "Personal Wiki", styles: {} }]
-            }
-        ]
-    }
+            h(1, "Personal Home"),
+            para("Welcome to your personal space. Keep everything organized here."),
+            h(2, "🎯 Goals"),
+            check("Goal 1"),
+            check("Goal 2"),
+            check("Goal 3"),
+            h(2, "⚡ Quick Notes"),
+            para("Write your quick thoughts here..."),
+            h(2, "📌 Important Links"),
+            bullet("Link 1"),
+            bullet("Link 2"),
+            h(2, "📅 This Week"),
+            bullet("Monday: "),
+            bullet("Wednesday: "),
+            bullet("Friday: "),
+        ],
+    },
 ];
 
 const DocumentsPage = () => {
@@ -124,7 +180,7 @@ const DocumentsPage = () => {
                 title: template.title,
                 emoji: template.emoji,
                 workspaceId: activeWorkspaceId,
-                content: template.content,
+                content: JSON.stringify(template.content),
             }),
         })
             .then(async (res) => {
@@ -144,6 +200,9 @@ const DocumentsPage = () => {
         });
     };
 
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
     return (
         <div className="min-h-full flex flex-col items-center p-8 pt-16 md:pt-32 space-y-8 animate-in fade-in duration-700">
             <div className="flex flex-col items-center space-y-4 max-w-md text-center">
@@ -160,49 +219,46 @@ const DocumentsPage = () => {
 
                 <div className="space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
-                        Welcome back, {user?.firstName}
+                        {greeting}, {user?.firstName}!
                     </h2>
-                    <p className="text-muted-foreground text-lg leading-relaxed max-w-[320px] mx-auto">
-                        Your workspace is ready. What would you like to build today?
+                    <p className="text-muted-foreground text-base leading-relaxed max-w-[320px] mx-auto">
+                        A new page is a chance to think, write, and create. What will you start today?
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+            <div className="w-full max-w-2xl">
                 <Button
                     onClick={onCreate}
                     size="lg"
-                    className="h-32 flex flex-col items-center justify-center gap-y-2 text-lg font-semibold hover:scale-[1.02] transition active:scale-95 bg-gradient-to-br from-indigo-600 to-blue-700 border-none shadow-lg shadow-blue-500/20"
+                    className="w-full h-14 flex items-center justify-center gap-x-2 text-base font-semibold hover:scale-[1.01] transition active:scale-95 bg-gradient-to-br from-indigo-600 to-blue-700 border-none shadow-lg shadow-blue-500/20"
                 >
-                    <PlusCircle className="h-8 w-8 mb-1" />
-                    Create a new note
+                    <PlusCircle className="h-5 w-5" />
+                    New page
                 </Button>
-
-                <div className="h-32 p-6 rounded-xl border border-dashed border-primary/20 flex flex-col items-center justify-center text-center group hover:border-primary/40 transition">
-                    <p className="text-sm font-medium text-muted-foreground group-hover:text-primary transition">
-                        Quick Tip: Use ⌘+K to search across all your documents instantly.
-                    </p>
-                </div>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                    Press <kbd className="px-1.5 py-0.5 text-[11px] rounded border bg-muted font-mono">⌘ K</kbd> to quickly search across all your pages
+                </p>
             </div>
 
-            <div className="w-full max-w-2xl pt-8 border-t border-primary/5">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-                    Recommended Templates
+            <div className="w-full max-w-2xl pt-6 border-t border-primary/5">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+                    Start with a template
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-10">
                     {TEMPLATES.map((template) => (
                         <div
                             key={template.title}
                             onClick={() => onTemplateCreate(template)}
-                            className="group relative flex flex-col gap-y-2 p-4 rounded-xl border border-primary/5 bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition hover:scale-[1.02] active:scale-95"
+                            className="group relative flex flex-col gap-y-2 p-4 rounded-xl border border-primary/5 bg-secondary/30 hover:bg-secondary/60 cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-95 hover:shadow-md"
                         >
-                            <div className="text-3xl mb-1">{template.icon}</div>
-                            <h4 className="font-semibold text-sm">{template.title}</h4>
-                            <p className="text-[10px] text-muted-foreground leading-tight">
+                            <div className="text-2xl mb-1">{template.icon}</div>
+                            <h4 className="font-semibold text-sm leading-tight">{template.title}</h4>
+                            <p className="text-[11px] text-muted-foreground leading-snug">
                                 {template.description}
                             </p>
-                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
-                                <PlusCircle className="h-4 w-4 text-primary" />
+                            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition">
+                                <PlusCircle className="h-3.5 w-3.5 text-primary" />
                             </div>
                         </div>
                     ))}

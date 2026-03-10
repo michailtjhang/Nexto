@@ -165,3 +165,8 @@
 .premium-gradient-bg {
   @apply bg-gradient-to-br from-white via-white to-neutral-50 dark:from-[#1F1F1F] dark:via-[#1F1F1F] dark:to-black;
 }
+
+/* Custom BlockNote Empty Placeholder */
+.bn-block-content[data-is-empty-and-focused="true"] .bn-inline-content:before {
+  content: "Press 'enter' to continue with an empty page, or create a template" !important;
+}

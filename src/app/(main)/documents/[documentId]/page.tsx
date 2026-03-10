@@ -8,6 +8,9 @@ import { Toolbar } from "@/components/toolbar";
 import { Cover } from "@/components/cover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounceCallback } from "usehooks-ts";
+import { File, Table2, SmilePlus, CheckSquare, Briefcase, Calendar, BookOpen, Home, PenTool } from "lucide-react";
+import { toast } from "sonner";
+import { useWorkspaceStore } from "@/hooks/use-workspace-store";
 
 interface DocumentIdPageProps {
     params: Promise<{
@@ -27,8 +30,10 @@ const DocumentIdPage = ({
     const { documentId } = use(params);
     const [document, setDocument] = useState<Document | null>(null);
     const [dbData, setDbData] = useState<{ id: string; columns: DatabaseColumn[]; rows: DatabaseRow[] } | null>(null);
+    const [templateAppliedCount, setTemplateAppliedCount] = useState(0);
 
     const { setId, setTitle } = useDocumentStore();
+    const { activeWorkspaceId, triggerRefresh } = useWorkspaceStore();
 
     useEffect(() => {
         const fetchDoc = async () => {
@@ -86,6 +91,151 @@ const DocumentIdPage = ({
         fetchDb();
     }, [databaseId]);
 
+    const isDocumentEmpty = useMemo(() => {
+        if (!document?.content) return true;
+        try {
+            const parsed = typeof document.content === "string"
+                ? JSON.parse(document.content)
+                : document.content;
+            if (!Array.isArray(parsed) || parsed.length === 0) return true;
+            if (parsed.length === 1 && parsed[0].type === "paragraph" && (!parsed[0].content || parsed[0].content.length === 0)) {
+                return true;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    }, [document?.content]);
+
+    const onCreateEmptyDatabase = async () => {
+        if (!activeWorkspaceId || !document) return;
+
+        const promise = (async () => {
+            const dbRes = await fetch("/api/databases", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    documentId: document.id,
+                    workspaceId: activeWorkspaceId,
+                    title: document.title || "Untitled Database",
+                }),
+            });
+            const db = await dbRes.json();
+
+            const initialContent = JSON.stringify([
+                {
+                    id: crypto.randomUUID(),
+                    type: "databaseBlock",
+                    props: { databaseId: db.id },
+                    children: [],
+                },
+            ]);
+
+            const patchRes = await fetch(`/api/documents/${document.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ content: initialContent, emoji: "🗄️" }),
+            });
+            
+            const updatedDoc = await patchRes.json();
+            setDocument(updatedDoc);
+            triggerRefresh();
+        })();
+
+        toast.promise(promise, {
+            loading: "Creating database...",
+            success: "Database created!",
+            error: "Failed to create database.",
+        });
+    };
+
+    const applyTemplate = async (templateName: string) => {
+        if (!document) return;
+
+        let initialContent: any[] = [];
+        let emoji = "📄";
+
+        if (templateName === "todo") {
+            emoji = "✅";
+            initialContent = [
+                { type: "heading", props: { level: 2 }, content: "To-Do List" },
+                { type: "checkListItem", props: { isChecked: false }, content: "First task" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Second task" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Third task" },
+            ];
+        } else if (templateName === "project") {
+            emoji = "🚀";
+            initialContent = [
+                { type: "heading", props: { level: 1 }, content: "Project Plan" },
+                { type: "heading", props: { level: 2 }, content: "Goals" },
+                { type: "bulletListItem", content: "Goal 1" },
+                { type: "bulletListItem", content: "Goal 2" },
+                { type: "heading", props: { level: 2 }, content: "Timeline" },
+                { type: "paragraph", content: "Write timeline here..." },
+            ];
+        } else if (templateName === "meeting") {
+            emoji = "👥";
+            initialContent = [
+                { type: "heading", props: { level: 1 }, content: "Meeting Notes" },
+                { type: "paragraph", content: "Date: " },
+                { type: "paragraph", content: "Attendees: " },
+                { type: "heading", props: { level: 2 }, content: "Agenda" },
+                { type: "bulletListItem", content: "Topic 1" },
+                { type: "bulletListItem", content: "Topic 2" },
+                { type: "heading", props: { level: 2 }, content: "Action Items" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Action 1" },
+            ];
+        } else if (templateName === "reading") {
+            emoji = "📚";
+            initialContent = [
+                { type: "heading", props: { level: 1 }, content: "Reading List" },
+                { type: "paragraph", content: "Keep track of books, articles, and podcasts you want to consume." },
+                { type: "heading", props: { level: 2 }, content: "To Read" },
+                { type: "checkListItem", props: { isChecked: false }, content: "The Great Gatsby" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Atomic Habits" },
+                { type: "heading", props: { level: 2 }, content: "Reading" },
+                { type: "paragraph", content: "Currently reading..." },
+            ];
+        } else if (templateName === "journal") {
+            emoji = "📓";
+            initialContent = [
+                { type: "heading", props: { level: 1 }, content: "Daily Journal" },
+                { type: "paragraph", content: `Date: ${new Date().toLocaleDateString()}` },
+                { type: "heading", props: { level: 2 }, content: "How was your day?" },
+                { type: "paragraph", content: "Write about your highlights, challenges, and thoughts today." },
+                { type: "heading", props: { level: 2 }, content: "Gratitude" },
+                { type: "bulletListItem", content: "I am grateful for..." },
+            ];
+        } else if (templateName === "personal") {
+            emoji = "🏠";
+            initialContent = [
+                { type: "heading", props: { level: 1 }, content: "Personal Home" },
+                { type: "paragraph", content: "Your private space to organize your life." },
+                { type: "heading", props: { level: 2 }, content: "Quick Links" },
+                { type: "paragraph", content: "[Link to something]" },
+                { type: "heading", props: { level: 2 }, content: "Goals for this year" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Learn something new" },
+                { type: "checkListItem", props: { isChecked: false }, content: "Visit a new place" },
+            ];
+        }
+
+        const promise = fetch(`/api/documents/${document.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: JSON.stringify(initialContent), emoji }),
+        }).then(res => res.json()).then(doc => {
+            setDocument(doc);
+            setTemplateAppliedCount(prev => prev + 1);
+            triggerRefresh(); // Sync updates
+        });
+
+        toast.promise(promise, {
+            loading: "Applying template...",
+            success: "Template applied!",
+            error: "Failed to apply template.",
+        });
+    };
+
     const debouncedUpdate = useDebounceCallback((content: string) => {
         fetch(`/api/documents/${documentId}`, {
             method: "PATCH",
@@ -141,10 +291,94 @@ const DocumentIdPage = ({
                         </div>
                     )
                 ) : (
-                    <Editor
-                        onChange={onChange}
-                        initialContent={document.content as string}
-                    />
+                    <>
+                        {isDocumentEmpty && (
+                            <div className="pl-[54px] max-w-lg mt-2 flex flex-col gap-1 z-10 relative">
+                                <button
+                                    onClick={() => {
+                                        fetch(`/api/documents/${document.id}`, {
+                                            method: "PATCH",
+                                            body: JSON.stringify({ emoji: "📄" }),
+                                        }).then(res => res.json()).then(doc => setDocument(doc));
+                                    }}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <SmilePlus className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Empty page with icon</span>
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        // Just setting focus to Editor implicitly handles Empty Page, but if they click it, we can ensure Editor focus 
+                                        const editorEl = window.document.querySelector('.bn-editor');
+                                        (editorEl as HTMLElement)?.focus();
+                                    }}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <File className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Empty page</span>
+                                </button>
+                                <div className="h-[1px] bg-border my-1 w-full scale-y-50"></div>
+                                <button
+                                    onClick={onCreateEmptyDatabase}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <Table2 className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Table</span>
+                                </button>
+                                
+                                <div className="mt-4 mb-2 px-2">
+                                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recommended Templates</p>
+                                </div>
+                                <button
+                                    onClick={() => applyTemplate("todo")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <CheckSquare className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">To-do list</span>
+                                </button>
+                                <button
+                                    onClick={() => applyTemplate("project")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <Briefcase className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Project plan</span>
+                                </button>
+                                <button
+                                    onClick={() => applyTemplate("meeting")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <Calendar className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Meeting notes</span>
+                                </button>
+                                <button
+                                    onClick={() => applyTemplate("reading")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <BookOpen className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Reading list</span>
+                                </button>
+                                <button
+                                    onClick={() => applyTemplate("journal")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <PenTool className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Journal</span>
+                                </button>
+                                <button
+                                    onClick={() => applyTemplate("personal")}
+                                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm text-sm text-muted-foreground hover:bg-muted transition-colors text-left"
+                                >
+                                    <Home className="h-4 w-4 shrink-0" />
+                                    <span className="font-medium">Personal home</span>
+                                </button>
+                            </div>
+                        )}
+                        <Editor
+                            key={`${document.id}-${templateAppliedCount}`}
+                            onChange={onChange}
+                            initialContent={document.content as string}
+                        />
+                    </>
                 )}
             </div>
         </div>
