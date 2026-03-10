@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nexto - Your Connected Workspace
+
+Nexto is a comprehensive, Notion-inspired workspace built with Next.js, React, Tailwind CSS, and Drizzle ORM. Designed to be performant, customizable, and capable, Nexto empowers you to write notes, organize workspaces, and build complex databases—all within a single app.
+
+## Features
+
+- **Rich Text Editor**: Write beautifully rich text notes and documents powered by BlockNote.
+- **Nested Documents**: Organize your documents infinitely with nested pages, just like Notion.
+- **Dynamic Databases**: Create custom database tables within pages featuring text, number, date, and customizable dropdown Select column types.
+- **Sidepeek View**: Hover over any database row's title and click "OPEN" to view and edit its detailed properties in a sliding sidepeek panel.
+- **Workspaces**: Collaborate across multiple workspaces or keep things private with Personal workspaces.
+- **Soft Deletion & Trash**: Safely remove documents to an integrated Trash bin and restore them whenever needed.
+- **Dark Mode**: Comes with a sleek Dark Mode aesthetic out of the box.
+- **Responsive Navigation**: Includes a collapsible desktop sidebar and a bottom-sheet mobile menu.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/) (App Router, React Server Components)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
+- **Editor**: [BlockNote](https://www.blocknotejs.org/)
+- **Database**: [Neon Serverless Postgres](https://neon.tech/) & [Drizzle ORM](https://orm.drizzle.team/)
+- **Authentication**: [Clerk](https://clerk.com/)
+- **File Uploads**: [UploadThing](https://uploadthing.com/)
 
 ## Getting Started
 
-First, run the development server:
+1. Clone or download the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   # or yarn / pnpm
+   ```
+3. Set up your `.env` file with exactly the required environment properties (e.g., Clerk Auth keys, Neon DB URI, and Uploadthing keys).
+4. Run schema migrations via Drizzle.
+5. Launch the local development server:
+   ```bash
+   npm run dev
+   ```
+6. Open your browser to [http://localhost:3000](http://localhost:3000) to see Nexto in action!
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Deployment
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy this app effortlessly on [Vercel](https://vercel.com/) or any other Next.js compatible hosting provider. Be sure to configure the same environment variables within your hosting dashboard as you did locally.

@@ -15,7 +15,35 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Nexto — Your connected workspace",
   description:
-    "Nexto is a Notion-inspired workspace for notes, documents, and collaboration.",
+    "Nexto is a Notion-inspired workspace for notes, documents, databases, and collaboration.",
+  keywords: ["Notion clone", "workspace", "notes", "database", "collaboration", "Next.js", "React", "BlockNote", "Tailwind CSS"],
+  authors: [{ name: "Michail" }],
+  openGraph: {
+    title: "Nexto — Your connected workspace",
+    description: "Nexto is a Notion-inspired workspace for notes, documents, databases, and collaboration.",
+    url: "https://nexto.vercel.app",
+    siteName: "Nexto",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Nexto Logo",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Nexto — Your connected workspace",
+    description: "Nexto is a Notion-inspired workspace for notes, documents, databases, and collaboration.",
+    images: ["/logo.png"],
+  },
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({
