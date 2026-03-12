@@ -42,7 +42,6 @@ const TEMPLATES = [
         icon: "🚀",
         description: "Plan tasks, track progress, and hit deadlines",
         content: [
-            h(1, "Project Tracker"),
             para("Use this page to plan, track, and manage your project."),
             h(2, "Goals"),
             bullet("Goal 1: Define the project scope"),
@@ -67,7 +66,6 @@ const TEMPLATES = [
         icon: "📚",
         description: "Track books, articles, and podcasts",
         content: [
-            h(1, "Reading List"),
             para("Keep track of everything you want to read, watch, or listen to."),
             h(2, "📖 To Read"),
             check("Atomic Habits — James Clear"),
@@ -86,7 +84,6 @@ const TEMPLATES = [
         icon: "📝",
         description: "Never lose track of decisions and action items",
         content: [
-            h(1, "Meeting Notes"),
             para(`Date: ${new Date().toLocaleDateString()}`),
             para("Attendees: "),
             h(2, "Agenda"),
@@ -108,7 +105,6 @@ const TEMPLATES = [
         icon: "🏠",
         description: "Your personal hub for goals and quick links",
         content: [
-            h(1, "Personal Home"),
             para("Welcome to your personal space. Keep everything organized here."),
             h(2, "🎯 Goals"),
             check("Goal 1"),

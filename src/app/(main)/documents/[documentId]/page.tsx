@@ -154,19 +154,20 @@ const DocumentIdPage = ({
 
         let initialContent: any[] = [];
         let emoji = "📄";
+        let newTitle = document.title;
 
         if (templateName === "todo") {
             emoji = "✅";
+            newTitle = "To-Do List";
             initialContent = [
-                { type: "heading", props: { level: 2 }, content: "To-Do List" },
                 { type: "checkListItem", props: { isChecked: false }, content: "First task" },
                 { type: "checkListItem", props: { isChecked: false }, content: "Second task" },
                 { type: "checkListItem", props: { isChecked: false }, content: "Third task" },
             ];
         } else if (templateName === "project") {
             emoji = "🚀";
+            newTitle = "Project Plan";
             initialContent = [
-                { type: "heading", props: { level: 1 }, content: "Project Plan" },
                 { type: "heading", props: { level: 2 }, content: "Goals" },
                 { type: "bulletListItem", content: "Goal 1" },
                 { type: "bulletListItem", content: "Goal 2" },
@@ -175,8 +176,8 @@ const DocumentIdPage = ({
             ];
         } else if (templateName === "meeting") {
             emoji = "👥";
+            newTitle = "Meeting Notes";
             initialContent = [
-                { type: "heading", props: { level: 1 }, content: "Meeting Notes" },
                 { type: "paragraph", content: "Date: " },
                 { type: "paragraph", content: "Attendees: " },
                 { type: "heading", props: { level: 2 }, content: "Agenda" },
@@ -187,8 +188,8 @@ const DocumentIdPage = ({
             ];
         } else if (templateName === "reading") {
             emoji = "📚";
+            newTitle = "Reading List";
             initialContent = [
-                { type: "heading", props: { level: 1 }, content: "Reading List" },
                 { type: "paragraph", content: "Keep track of books, articles, and podcasts you want to consume." },
                 { type: "heading", props: { level: 2 }, content: "To Read" },
                 { type: "checkListItem", props: { isChecked: false }, content: "The Great Gatsby" },
@@ -198,8 +199,8 @@ const DocumentIdPage = ({
             ];
         } else if (templateName === "journal") {
             emoji = "📓";
+            newTitle = "Daily Journal";
             initialContent = [
-                { type: "heading", props: { level: 1 }, content: "Daily Journal" },
                 { type: "paragraph", content: `Date: ${new Date().toLocaleDateString()}` },
                 { type: "heading", props: { level: 2 }, content: "How was your day?" },
                 { type: "paragraph", content: "Write about your highlights, challenges, and thoughts today." },
@@ -208,8 +209,8 @@ const DocumentIdPage = ({
             ];
         } else if (templateName === "personal") {
             emoji = "🏠";
+            newTitle = "Personal Home";
             initialContent = [
-                { type: "heading", props: { level: 1 }, content: "Personal Home" },
                 { type: "paragraph", content: "Your private space to organize your life." },
                 { type: "heading", props: { level: 2 }, content: "Quick Links" },
                 { type: "paragraph", content: "[Link to something]" },
@@ -222,9 +223,10 @@ const DocumentIdPage = ({
         const promise = fetch(`/api/documents/${document.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: JSON.stringify(initialContent), emoji }),
+            body: JSON.stringify({ title: newTitle, content: JSON.stringify(initialContent), emoji }),
         }).then(res => res.json()).then(doc => {
             setDocument(doc);
+            setTitle(doc.title);
             setTemplateAppliedCount(prev => prev + 1);
             triggerRefresh(); // Sync updates
         });

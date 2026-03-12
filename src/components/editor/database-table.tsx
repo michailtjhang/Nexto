@@ -40,6 +40,8 @@ declare module "@tanstack/react-table" {
         updateColumnOptions: (columnId: string, options: { id: string; label: string; color?: string }[]) => void;
         openSidepeek: (rowId: string) => void;
         deleteRow: (rowId: string) => void;
+        renameColumn: (columnId: string, name: string) => void;
+        deleteColumn: (columnId: string) => void;
     }
 }
 
@@ -451,6 +453,37 @@ export const DatabaseTable = ({
         [rows, scheduleSave]
     );
 
+    const renameColumn = useCallback(
+        (colId: string, newName: string) => {
+            setColumns(prev => {
+                const next = prev.map(c =>
+                    c.id === colId ? { ...c, name: newName } : c
+                );
+                scheduleSave(next, rows);
+                return next;
+            });
+        },
+        [rows, scheduleSave]
+    );
+
+    const deleteColumn = useCallback(
+        (colId: string) => {
+            setColumns(prev => {
+                const next = prev.filter(c => c.id !== colId);
+                // Also clean up data in rows
+                const nextRows = rows.map(r => {
+                    const nextR = { ...r };
+                    delete nextR[colId];
+                    return nextR as DatabaseRow;
+                });
+                setRows(nextRows);
+                scheduleSave(next, nextRows);
+                return next;
+            });
+        },
+        [rows, scheduleSave]
+    );
+
     // ── Add Row ─────────────────────────────────────────────────────────────
     const addRow = useCallback(() => {
         const newRow: DatabaseRow = { id: crypto.randomUUID() };
@@ -521,10 +554,41 @@ export const DatabaseTable = ({
                 const Icon = typeInfo?.icon || Type;
 
                 return (
-                    <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground w-full">
-                        <Icon className="h-3 w-3" />
-                        {col.name}
-                    </span>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <button className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground w-full hover:bg-muted/50 transition px-1 py-0.5 rounded -ml-1">
+                                <Icon className="h-3 w-3" />
+                                <span className="truncate">{col.name}</span>
+                                <ChevronDown className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                            </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-56 p-2" align="start">
+                            <div className="space-y-2">
+                                <div className="px-2 py-1.5">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Rename</p>
+                                    <Input 
+                                        defaultValue={col.name}
+                                        className="h-7 text-xs"
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                table.options.meta?.renameColumn(col.id, e.currentTarget.value);
+                                            }
+                                        }}
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="border-t border-border pt-1">
+                                    <button
+                                        onClick={() => table.options.meta?.deleteColumn(col.id)}
+                                        className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded transition-colors"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                        Delete column
+                                    </button>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 );
             },
             accessorFn: (row: DatabaseRow) => row[col.id] ?? "",
@@ -567,6 +631,8 @@ export const DatabaseTable = ({
         meta: {
             updateCell,
             updateColumnOptions,
+            renameColumn,
+            deleteColumn,
             openSidepeek: (id: string) => setSidepeekRowId(id),
             deleteRow,
         },
@@ -600,7 +666,7 @@ export const DatabaseTable = ({
                                     className="h-8 text-sm"
                                     autoFocus
                                 />
-                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-1 sidebar-scrollbar">
+                                <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1 sidebar-scrollbar scroll-smooth">
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Suggested</p>
                                         <div className="grid grid-cols-1 gap-0.5">
