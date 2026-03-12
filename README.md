@@ -31,7 +31,10 @@ Nexto is a comprehensive, Notion-inspired workspace built with Next.js, React, T
    # or yarn / pnpm
    ```
 3. Set up your `.env` file with exactly the required environment properties (e.g., Clerk Auth keys, Neon DB URI, and Uploadthing keys).
-4. Run schema migrations via Drizzle.
+4. Run schema migrations via Drizzle:
+   ```bash
+   npm run db:push
+   ```
 5. Launch the local development server:
    ```bash
    npm run dev

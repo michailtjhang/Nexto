@@ -64,11 +64,18 @@ export type NewDatabase = typeof databases.$inferInsert;
 export type DatabaseColumn = {
     id: string;
     name: string;
-    type: "text" | "select" | "date" | "number";
-    options?: string[]; // For select type
+    type: 
+        | "text" | "number" | "select" | "multi-select" 
+        | "status" | "date" | "person" | "files" 
+        | "checkbox" | "url" | "email" | "phone" 
+        | "formula" | "relation" | "rollup" 
+        | "created-time" | "created-by" | "last-edited-time" | "last-edited-by" 
+        | "button" | "place" | "no-id"
+        | "google-drive" | "figma" | "github" | "zendesk";
+    options?: { id: string; label: string; color?: string }[]; // Enhanced options
 };
 
 export type DatabaseRow = {
     id: string;
-    [columnId: string]: string;
+    [columnId: string]: any; // Changed from string to any to support objects/arrays
 };
