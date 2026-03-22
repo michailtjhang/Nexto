@@ -15,11 +15,17 @@ import {
 interface ConfirmModalProps {
     children: React.ReactNode;
     onConfirm: () => void;
+    title?: string;
+    description?: string;
+    confirmText?: string;
 }
 
 export const ConfirmModal = ({
     children,
     onConfirm,
+    title = "Are you absolutely sure?",
+    description = "This action cannot be undone.",
+    confirmText = "Confirm",
 }: ConfirmModalProps) => {
     const handleConfirm = (
         e: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -35,9 +41,9 @@ export const ConfirmModal = ({
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone.
+                        {description}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -45,7 +51,7 @@ export const ConfirmModal = ({
                         Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction onClick={handleConfirm}>
-                        Confirm
+                        {confirmText}
                     </AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>

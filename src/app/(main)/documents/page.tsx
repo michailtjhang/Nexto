@@ -201,7 +201,8 @@ const DocumentsPage = () => {
     const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     return (
-        <div className="min-h-full flex flex-col items-center p-8 pt-16 md:pt-32 space-y-8 animate-in fade-in duration-700">
+        <div className="min-h-full flex flex-col items-center p-8 pt-4 md:pt-8 space-y-8 animate-in fade-in duration-700">
+            <Marquee />
             <div className="flex flex-col items-center space-y-4 max-w-md text-center">
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
@@ -261,7 +262,6 @@ const DocumentsPage = () => {
                     ))}
                 </div>
             </div>
-            <Marquee />
         </div>
     );
 };

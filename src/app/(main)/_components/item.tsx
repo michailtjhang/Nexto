@@ -164,10 +164,15 @@ export const Item = ({
                             side="right"
                             forceMount
                         >
-                            <ConfirmModal onConfirm={onArchive}>
+                            <ConfirmModal 
+                                onConfirm={onArchive}
+                                title="Move to trash?"
+                                description="This will move your note to the trash."
+                                confirmText="Move to trash"
+                            >
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                     <Trash className="h-4 w-4 mr-2" />
-                                    Delete
+                                    Move to trash
                                 </DropdownMenuItem>
                             </ConfirmModal>
                             <DropdownMenuSeparator />
