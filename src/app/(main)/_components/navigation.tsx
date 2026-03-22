@@ -6,7 +6,8 @@ import {
     Search,
     Settings,
     LogOut,
-    Trash
+    Trash,
+    Coffee
 } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { ElementRef, useEffect, useRef, useState } from "react";
@@ -166,6 +167,11 @@ export const Navigation = () => {
                         label="Settings"
                         icon={Settings}
                         onClick={settings.onOpen}
+                    />
+                    <Item 
+                        label="Support Donasi" 
+                        icon={Coffee} 
+                        onClick={() => window.open("https://trakteer.id/michail.kx", "_blank")} 
                     />
                     <AddNewMenu />
                 </div>

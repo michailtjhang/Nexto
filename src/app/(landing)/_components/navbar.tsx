@@ -25,6 +25,11 @@ export const Navbar = () => {
                 )}
                 {!user && isLoaded && (
                     <>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="https://trakteer.id/michail.kx" target="_blank" rel="noopener noreferrer">
+                                Support Donasi
+                            </Link>
+                        </Button>
                         <SignInButton mode="modal">
                             <Button variant="ghost" size="sm">
                                 Log in
@@ -39,6 +44,11 @@ export const Navbar = () => {
                 )}
                 {user && isLoaded && (
                     <>
+                        <Button variant="ghost" size="sm" asChild>
+                            <Link href="https://trakteer.id/michail.kx" target="_blank" rel="noopener noreferrer">
+                                Support Donasi
+                            </Link>
+                        </Button>
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/documents">
                                 Enter Nexto
