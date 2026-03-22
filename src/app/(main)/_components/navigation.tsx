@@ -163,6 +163,12 @@ export const Navigation = () => {
                         isSearch
                         onClick={search.onOpen}
                     />
+                    <AddNewMenu />
+                </div>
+                <div className="mt-4">
+                    <DocumentList />
+                </div>
+                <div className="mt-auto px-3 py-2">
                     <Item
                         label="Settings"
                         icon={Settings}
@@ -171,14 +177,9 @@ export const Navigation = () => {
                     <Item 
                         label="Support Donasi" 
                         icon={Coffee} 
+                        iconColor="text-rose-500"
                         onClick={() => window.open("https://trakteer.id/michail.kx", "_blank")} 
                     />
-                    <AddNewMenu />
-                </div>
-                <div className="mt-4">
-                    <DocumentList />
-                </div>
-                <div className="mt-auto px-3 py-2">
                     <Popover>
                         <PopoverTrigger className="w-full">
                             <Item

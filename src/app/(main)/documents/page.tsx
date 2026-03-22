@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useWorkspaceStore } from "@/hooks/use-workspace-store";
+import { Marquee } from "@/components/marquee";
 
 const mk = (text: string, styles: object = {}) => ({ type: "text", text, styles });
 const para = (...texts: string[]) => ({
@@ -260,6 +261,7 @@ const DocumentsPage = () => {
                     ))}
                 </div>
             </div>
+            <Marquee />
         </div>
     );
 };
